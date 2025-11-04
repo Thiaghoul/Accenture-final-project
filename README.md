@@ -15,3 +15,12 @@ nome do projeto: TaskFlow
 - Colaboração
 - Dashboard e Relatórios
 - Configurações e Acesso
+
+## Ferramentas
+
+Servidor:
+- Java
+- JDK 21 SE
+
+Cliente:
+- React
