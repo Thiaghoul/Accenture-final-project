@@ -34,6 +34,12 @@ public class UserService {
         return toUserResponse(savedUser);
     }
 
+    public java.util.List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::toUserResponse)
+                .collect(Collectors.toList());
+    }
+
     private UserResponse toUserResponse(UserModels userModels) {
         UserResponse userResponse = new UserResponse();
         userResponse.setId(userModels.getId());
