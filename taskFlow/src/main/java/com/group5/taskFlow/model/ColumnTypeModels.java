@@ -20,11 +20,13 @@ public class ColumnTypeModels implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(unique = true, nullable = false)
     private String name;
 
+    @Column(name = "display_order", nullable = false)
     private Integer order;
 
-    @OneToMany(mappedBy = "column_types")
-    private Set<Column> columns = new HashSet<>();
+    @OneToMany(mappedBy = "columnType")
+    private Set<ColumnsModels> columns = new HashSet<>();
 
 }

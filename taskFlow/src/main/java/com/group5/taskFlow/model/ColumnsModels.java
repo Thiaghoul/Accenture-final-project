@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,20 +16,21 @@ public class ColumnsModels implements Serializable {
     static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToMany
+    @ManyToOne
     @JoinColumn(name = "board_id", nullable = false)
     private BoardModels board;
 
-    @ManyToMany
+    @ManyToOne
     @JoinColumn(name = "column_type_id", nullable = false)
     private ColumnTypeModels columnType;
 
+    @Column(name = "display_order", nullable = false)
     private Integer order;
 
-    @OneToMany(mappedBy = "columns", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CardsModels> cards;
+    @OneToMany(mappedBy = "column", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CardsModels> cards = new HashSet<>();
 
 }
