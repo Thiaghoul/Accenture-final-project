@@ -1060,5 +1060,5 @@ This section defines MANDATORY security requirements and guidelines for all deve
 
 This document will now be used to guide the architecture and development phases. The next steps are:
 1.  Review and approval of this Architecture Document by stakeholders.
-2.  Begin story implementation with Dev agent.
+2.  Begin story implementation with Dev agent
 3.  Set up infrastructure with DevOps agent.
