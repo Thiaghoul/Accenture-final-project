@@ -1,6 +1,5 @@
 package com.group5.taskFlow.model;
 
-import com.group5.taskFlow.model.enums.UserRoles;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,7 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Data
-@Table(name = "user")
+@Table(name = "users")
 public class UserModels implements Serializable {
 
     static final long serialVersionUID = 1L;
@@ -20,7 +19,7 @@ public class UserModels implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false, name = "password_hash")
@@ -32,9 +31,10 @@ public class UserModels implements Serializable {
     @Column(nullable = false)
     private String lastName;
 
-    @Enumerated(EnumType.STRING)
     @ElementCollection(fetch = FetchType.EAGER)
-    private UserRoles role;
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    private Set<String> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BoardMembersModels> boardMemberships = new HashSet<>();

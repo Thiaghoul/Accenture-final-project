@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "board")
+@Table(name = "boards")
 @Data
 public class BoardModels implements Serializable {
 
@@ -20,6 +20,7 @@ public class BoardModels implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false)
     private String name;
     private String description;
 
@@ -32,7 +33,7 @@ public class BoardModels implements Serializable {
     }
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ColumnsModels> colums = new HashSet<>();
+    private Set<ColumnsModels> columns = new HashSet<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BoardMembersModels> members = new HashSet<>();

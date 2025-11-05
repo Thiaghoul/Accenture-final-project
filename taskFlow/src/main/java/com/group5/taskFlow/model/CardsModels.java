@@ -19,16 +19,20 @@ public class CardsModels implements Serializable {
     static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false)
     private String title;
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Priority priority;
 
     private LocalDate dueDate;
+
+    @Column(columnDefinition = "INT DEFAULT 0")
     private Integer completionPercentage = 0;
 
     private Instant createdAt = Instant.now();
@@ -36,7 +40,7 @@ public class CardsModels implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "column_id", nullable = false)
-    private Column column;
+    private ColumnsModels column;
 
     @ManyToOne
     @JoinColumn(name = "assignee_id")
