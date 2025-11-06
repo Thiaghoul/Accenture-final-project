@@ -66,7 +66,7 @@ public class UserServiceTest {
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(UserModels.class))).thenReturn(userModels);
 
-        userService.registerUser(userRequest);
+        userService.save(userRequest);
 
         verify(userRepository, times(1)).save(any(UserModels.class));
     }
@@ -76,7 +76,7 @@ public class UserServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userModels));
 
         assertThrows(IllegalArgumentException.class, () -> {
-            userService.registerUser(userRequest);
+            userService.save(userRequest);
         });
 
         verify(userRepository, never()).save(any(UserModels.class));
