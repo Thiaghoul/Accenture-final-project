@@ -9,6 +9,7 @@ import com.group5.taskFlow.model.enums.Priority;
 import com.group5.taskFlow.repository.CardRepository;
 import com.group5.taskFlow.repository.ColumnRepository;
 import com.group5.taskFlow.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -95,7 +95,7 @@ public class CardServiceTest {
     public void save_whenColumnNotFound_shouldThrowNoSuchElementException() {
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> cardService.save(cardRequest));
+        assertThrows(EntityNotFoundException.class, () -> cardService.save(cardRequest));
     }
 
     @Test
@@ -103,7 +103,7 @@ public class CardServiceTest {
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
         when(userRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> cardService.save(cardRequest));
+        assertThrows(EntityNotFoundException.class, () -> cardService.save(cardRequest));
     }
 
   @Test

@@ -120,26 +120,10 @@ public class CardService {
     return cardResponse;
   }
 
-  /* Problema encontrado:
-  Nao esta resgando corretamente as colunas de acordo com o board.
-  Uma abordagem viavel seria resgatar as colunas de acordo com o id da board.
-   */
   public List<CardResponse> getAllCardOfBoard(UUID id) {
-    System.out.println("getAllCardOfBoard - STARTED");
-    BoardModels resultSearch = boardRepository.findById(id).get();
-    Set<ColumnsModels> columns = resultSearch.getColumns();
-    List<CardsModels> cards = new ArrayList<>();
-    System.out.println("getAllCardOfBoard - SEARCHING");
-    for (ColumnsModels column : columns) {
-      cards.addAll(column.getCards());
-    }
-
-    System.out.println("getAllCardOfBoard - GET ALL CARDS AND FINISHED");
-
-    var resultsCards = cards.stream().map(this::toCardResponse).toList();
-
-    System.out.println("getAllCardOfBoard - GET ALL CARDS RESPONSE TO USER");
-    return resultsCards;
+    return cardRepository.findByBoardId(id).stream()
+            .map(this::toCardResponse)
+            .collect(Collectors.toList());
   }
 
   public void changeStatusWithId(UUID id) {
