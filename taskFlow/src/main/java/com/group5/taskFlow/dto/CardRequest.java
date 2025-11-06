@@ -21,4 +21,6 @@ public class CardRequest {
 
     private UUID columnId;
     private UUID assigneeId;
+    private Integer completionPercentage;
+
 }

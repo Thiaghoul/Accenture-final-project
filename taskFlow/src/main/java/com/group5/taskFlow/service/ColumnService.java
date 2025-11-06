@@ -10,8 +10,10 @@ import com.group5.taskFlow.repository.ColumnRepository;
 import com.group5.taskFlow.repository.ColumnTypeRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ColumnService {
@@ -43,6 +45,43 @@ public class ColumnService {
         ColumnsModels savedColumn = columnRepository.save(columnsModels);
 
         return toColumnResponse(savedColumn);
+    }
+
+    public List<ColumnResponse> findAll() {
+        return columnRepository.findAll().stream()
+                .map(this::toColumnResponse)
+                .collect(Collectors.toList());
+    }
+
+    public ColumnResponse findById(UUID id) {
+        ColumnsModels columnsModels = columnRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Column not found with ID: " + id));
+        return toColumnResponse(columnsModels);
+    }
+
+    public ColumnResponse update(UUID id, ColumnRequest columnRequest) {
+        ColumnsModels columnsModels = columnRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Column not found with ID: " + id));
+
+        columnsModels.setOrder(columnRequest.getOrder());
+
+        if (columnRequest.getBoardId() != null) {
+            BoardModels board = findBoardById(columnRequest.getBoardId());
+            columnsModels.setBoard(board);
+        }
+
+        if (columnRequest.getColumnTypeId() != null) {
+            ColumnTypeModels columnType = findColumnTypeById(columnRequest.getColumnTypeId());
+            columnsModels.setColumnType(columnType);
+        }
+
+        ColumnsModels updatedColumn = columnRepository.save(columnsModels);
+
+        return toColumnResponse(updatedColumn);
+    }
+
+    public void deleteById(UUID id) {
+        columnRepository.deleteById(id);
     }
 
     private BoardModels findBoardById(UUID boardId) {

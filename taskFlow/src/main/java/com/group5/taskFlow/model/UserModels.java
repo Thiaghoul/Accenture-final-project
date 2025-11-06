@@ -47,4 +47,10 @@ public class UserModels implements Serializable {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ActivityLogsModels> activityLogs = new HashSet<>();
+
+    // Helper method to keep both sides of the relationship in sync
+    public void addAssignedCard(CardsModels card) {
+        assignedCards.add(card);
+        card.setAssignee(this);
+    }
 }
