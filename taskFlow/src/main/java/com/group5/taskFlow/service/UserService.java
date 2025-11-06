@@ -27,22 +27,11 @@ public class UserService {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    public void registerUser(UserRequest userRequest) {
+    public UserResponse save(UserRequest userRequest) {
         if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
             throw new IllegalArgumentException("User with this email already exists.");
         }
-
-        UserModels userModels = new UserModels();
-        userModels.setEmail(userRequest.getEmail());
-        userModels.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
-        userModels.setFirstName(userRequest.getFirstName());
-        userModels.setLastName(userRequest.getLastName());
-        userModels.setRoles(userRequest.getRoles().stream().map(UserRoles::name).collect(Collectors.toSet()));
-
-        userRepository.save(userModels);
-    }
-
-    public UserResponse save(UserRequest userRequest) {
+        
         UserModels userModels = new UserModels();
         userModels.setEmail(userRequest.getEmail());
         userModels.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
