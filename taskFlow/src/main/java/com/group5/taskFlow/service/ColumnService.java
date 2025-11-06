@@ -1,5 +1,6 @@
 package com.group5.taskFlow.service;
 
+import com.group5.taskFlow.dto.CardResponse;
 import com.group5.taskFlow.dto.ColumnRequest;
 import com.group5.taskFlow.dto.ColumnResponse;
 import com.group5.taskFlow.model.BoardModels;
@@ -98,11 +99,34 @@ public class ColumnService {
         ColumnResponse columnResponse = new ColumnResponse();
         columnResponse.setId(columnsModels.getId());
         columnResponse.setOrder(columnsModels.getOrder());
+
         if (columnsModels.getBoard() != null) {
             columnResponse.setBoardId(columnsModels.getBoard().getId());
         }
         if (columnsModels.getColumnType() != null) {
             columnResponse.setColumnTypeId(columnsModels.getColumnType().getId());
+            columnResponse.setName(columnsModels.getColumnType().getName());
+        }
+
+        if(columnsModels.getCards() != null && !columnsModels.getCards().isEmpty()){
+            columnResponse.setCards(
+                    columnsModels.getCards().stream()
+                            .map(card -> {
+                                var cardResponse = new CardResponse();
+                                cardResponse.setId(card.getId());
+                                cardResponse.setTitle(card.getTitle());
+                                cardResponse.setDescription(card.getDescription());
+                                cardResponse.setPriority(card.getPriority());
+                                cardResponse.setDueDate(card.getDueDate());
+                                cardResponse.setCompletionPercentage(card.getCompletionPercentage());
+                                cardResponse.setColumnId(card.getColumn().getId());
+                                cardResponse.setAssigneeId(card.getAssignee().getId());
+                                cardResponse.setCreatedAt(card.getCreatedAt());
+                                cardResponse.setUpdatedAt(card.getUpdatedAt());
+                                return cardResponse;
+                            })
+                            .collect(Collectors.toList())
+            );
         }
         return columnResponse;
     }
