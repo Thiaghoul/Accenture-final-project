@@ -105,4 +105,9 @@ public class CardServiceTest {
 
         assertThrows(NoSuchElementException.class, () -> cardService.save(cardRequest));
     }
+
+  @Test
+  void getAllCardOfBoard() {
+
+  }
 }
