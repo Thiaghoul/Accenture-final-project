@@ -22,54 +22,51 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+  private final JwtTokenProvider jwtTokenProvider;
+  private final HandlerExceptionResolver handlerExceptionResolver;
 
-    private final UserDetailsService userDetailsService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final HandlerExceptionResolver handlerExceptionResolver;
+  public SecurityConfig(JwtTokenProvider jwtTokenProvider, HandlerExceptionResolver handlerExceptionResolver) {
+    this.jwtTokenProvider = jwtTokenProvider;
+    this.handlerExceptionResolver = handlerExceptionResolver;
+  }
 
-    public SecurityConfig(UserDetailsService userDetailsService, JwtTokenProvider jwtTokenProvider, HandlerExceptionResolver handlerExceptionResolver) {
-        this.userDetailsService = userDetailsService;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.handlerExceptionResolver = handlerExceptionResolver;
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+    UserDetails user = User.builder()
+            .username("testuser")
+            .password(passwordEncoder.encode("password"))
+            .roles("ADMIN")
+            .build();
+    return new InMemoryUserDetailsManager(user);
+  }
 
-    @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails user = User.builder()
-                .username("testuser")
-                .password(passwordEncoder.encode("password"))
-                .roles("ADMIN")
-                .build();
-        return new InMemoryUserDetailsManager(user);
-    }
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    return authenticationConfiguration.getAuthenticationManager();
+  }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+  @Bean
+  public JwtTokenFilter jwtTokenFilter(UserDetailsService userDetailsService) {
+    return new JwtTokenFilter(jwtTokenProvider, userDetailsService, handlerExceptionResolver);
+  }
 
-    @Bean
-    public JwtTokenFilter jwtTokenFilter() {
-        return new JwtTokenFilter(jwtTokenProvider, userDetailsService, handlerExceptionResolver);
-    }
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtTokenFilter jwtTokenFilter) throws Exception {
+    http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(authorize -> authorize
+                    .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**", "/swagger").permitAll()
+                    .anyRequest().authenticated()
+            );
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**").permitAll()
-                        .anyRequest().authenticated()
-                );
+    http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
-        http.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
+    return http.build();
+  }
 }
