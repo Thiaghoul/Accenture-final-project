@@ -1,18 +1,16 @@
 package com.group5.taskFlow.security;
 
 import com.group5.taskFlow.exception.JwtAuthenticationException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 
 @Component
@@ -24,22 +22,40 @@ public class JwtTokenProvider {
     @Value("${api.security.token.expiration}")
     private int jwtExpirationInMs;
 
-    public String generateToken(Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public String generateToken(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
+                .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 
+    /**
+     * Generates a JWT token for an authenticated user.
+     * This method extracts the username from the Authentication object and delegates to the generateToken(String username) method.
+     * @param authentication The authentication object containing the user's principal.
+     * @return A JWT token string.
+     */
+    public String generateToken(Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        return generateToken(userDetails.getUsername());
+    }
+
     public String getUsernameFromJWT(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(jwtSecret)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
@@ -48,18 +64,11 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;
-        } catch (SignatureException ex) {
-            throw new JwtAuthenticationException("Invalid JWT signature", ex);
-        } catch (MalformedJwtException ex) {
-            throw new JwtAuthenticationException("Invalid JWT token", ex);
-        } catch (ExpiredJwtException ex) {
-            throw new JwtAuthenticationException("Expired JWT token", ex);
-        } catch (UnsupportedJwtException ex) {
-            throw new JwtAuthenticationException("Unsupported JWT token", ex);
-        } catch (IllegalArgumentException ex) {
-            throw new JwtAuthenticationException("JWT claims string is empty.", ex);
+        } catch (JwtException | IllegalArgumentException e) {
+            // Using a single catch block for simplicity as we are re-throwing
+            throw new JwtAuthenticationException("Invalid or expired JWT token", e);
         }
     }
 }
