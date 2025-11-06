@@ -3,6 +3,7 @@ package com.group5.taskFlow.dto;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -12,4 +13,5 @@ public class BoardResponse {
     private String description;
     private Instant createdAt;
     private Instant updatedAt;
+    private List<ColumnResponse> columns;
 }
