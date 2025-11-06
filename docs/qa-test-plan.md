@@ -101,3 +101,6 @@ To test the web layer of the application, including request handling, input vali
 4.  **Exception Handling:**
     -   **Test Case:** Mock the service layer to throw an exception and verify that the controller's global exception handler (`@ControllerAdvice`) catches it and returns the appropriate HTTP error status.
     -   **Purpose:** Ensures a consistent and predictable error response format for clients.
+5.  **New Functionalities and Story Coverage:**
+    -   **Test Case:** For each new controller endpoint or modified functionality introduced by recent stories, create dedicated test cases.
+    -   **Purpose:** Ensure that all recently implemented features and their corresponding API interactions are thoroughly tested, validating their integration with the service layer and correct response handling. Developers should review the latest stories in `docs/stories/` and the controller implementations to identify all new or modified endpoints requiring test coverage.
