@@ -1,4 +1,6 @@
 package com.group5.taskFlow.dto;
 
-public record UserRegisterResponse(String username, String token) {
+import jakarta.validation.constraints.NotBlank;
+
+public record UserRegisterResponse(@NotBlank String email, @NotBlank String token) {
 }
