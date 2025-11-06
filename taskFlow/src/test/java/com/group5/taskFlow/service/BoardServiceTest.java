@@ -4,6 +4,8 @@ import com.group5.taskFlow.dto.BoardRequest;
 import com.group5.taskFlow.dto.BoardResponse;
 import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.repository.BoardRepository;
+import com.group5.taskFlow.repository.ColumnRepository;
+import com.group5.taskFlow.repository.ColumnTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +25,15 @@ public class BoardServiceTest {
 
     @Mock
     private BoardRepository boardRepository;
+
+    @Mock
+    private ColumnRepository columnRepository;
+
+    @Mock
+    private ColumnTypeRepository columnTypeRepository;
+
+    @Mock
+    private CardService cardService;
 
     @InjectMocks
     private BoardService boardService;
