@@ -1,3 +1,5 @@
 /node_modules
 /.gemini
 .env
+/FrontTaskFlow/node_modules
+/FrontTaskFlow/dist
