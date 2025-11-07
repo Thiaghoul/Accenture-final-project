@@ -13,75 +13,55 @@ import java.util.Date;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(JwtAuthenticationException.class)
-    public ResponseEntity<?> handleJwtAuthenticationException(JwtAuthenticationException ex, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
-    }
+  @ExceptionHandler(JwtAuthenticationException.class)
+  public ResponseEntity<?> handleJwtAuthenticationException(JwtAuthenticationException ex, WebRequest request) {
+    ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
+    return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
+  }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<?> handleEntityNotFoundException(EntityNotFoundException ex, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
-    }
+  @ExceptionHandler(EntityNotFoundException.class)
+  public ResponseEntity<?> handleEntityNotFoundException(EntityNotFoundException ex, WebRequest request) {
+    ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<?> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
-    }
+    return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+  }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<?> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
-    }
+  @ExceptionHandler(EmailAlreadyExistsException.class)
+  public ResponseEntity<?> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex, WebRequest request) {
+    ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
+    return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+  }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> globalExceptionHandler(Exception ex, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-    
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-    
-    public static class ErrorDetails {
-        private Date timestamp;
-        private String message;
-        private String details;
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<?> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
+    ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
+    return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
+  }
 
-        public ErrorDetails(Date timestamp, String message, String details) {
-            this.timestamp = timestamp;
-            this.message = message;
-            this.details = details;
-        }
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<?> globalExceptionHandler(Exception ex, WebRequest request) {
+    ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
+    System.out.println("ERROR -- " + ex.getMessage() + "\n" + ex.getCause().toString());
 
-        // Getters and setters
-        public Date getTimestamp() {
-            return timestamp;
-        }
+    return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 
-        public void setTimestamp(Date timestamp) {
-            this.timestamp = timestamp;
-        }
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
 
-        public String getMessage() {
-            return message;
-        }
+  @ExceptionHandler(EnumConstantNotPresentException.class)
+  public ResponseEntity<ErrorDetails> handleEnumConstantNotPresentException(EnumConstantNotPresentException ex, WebRequest request) {
+    ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
+    return new ResponseEntity<>(errorDetails, HttpStatus.NOT_ACCEPTABLE);
+  }
 
-        public void setMessage(String message) {
-            this.message = message;
-        }
+  public static record ErrorDetails(
+          Date timestamp,
+          String message,
+          String details
 
-        public String getDetails() {
-            return details;
-        }
-
-        public void setDetails(String details) {
-            this.details = details;
-        }
-    }
+  ) {
+  }
 }

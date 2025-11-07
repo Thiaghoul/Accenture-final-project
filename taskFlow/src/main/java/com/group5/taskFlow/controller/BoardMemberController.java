@@ -30,7 +30,6 @@ public class BoardMemberController {
     public ResponseEntity<List<BoardResponse>> getBoardsByUserId(@PathVariable UUID userId) {
         log.info("Received request to get boards for user id: {}", userId);
 
-        // TODO: problema em enviar a lista de boards para o cliente
         try {
             List<BoardModels> boards = boardMemberService.findBoardsByUserId(userId);
             var listResult = boards.stream().map(boardService::toBoardResponse).toList();
