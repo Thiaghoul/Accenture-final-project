@@ -3,3 +3,4 @@
 .env
 /FrontTaskFlow/node_modules
 /FrontTaskFlow/dist
+/taskFlow/logs
