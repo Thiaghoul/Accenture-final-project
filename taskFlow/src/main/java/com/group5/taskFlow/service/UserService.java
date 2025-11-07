@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
 import com.group5.taskFlow.exception.EmailAlreadyExistsException;
+import com.group5.taskFlow.dto.UserUpdateRequest;
+
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -70,18 +72,12 @@ public class UserService {
         return toUserResponse(user);
     }
 
-    public UserResponse updateUser(UUID id, UserRequest userRequest) {
+    public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest) {
         UserModels existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
 
-        existingUser.setEmail(userRequest.getEmail());
-        existingUser.setFirstName(userRequest.getFirstName());
-        existingUser.setLastName(userRequest.getLastName());
-        existingUser.setRoles(userRequest.getRoles().stream().map(UserRoles::name).collect(Collectors.toSet()));
-
-        if (userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()) {
-            existingUser.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
-        }
+        existingUser.setFirstName(userUpdateRequest.getFirstName());
+        existingUser.setLastName(userUpdateRequest.getLastName());
 
         UserModels updatedUser = userRepository.save(existingUser);
         return toUserResponse(updatedUser);
