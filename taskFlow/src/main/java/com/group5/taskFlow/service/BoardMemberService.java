@@ -53,7 +53,7 @@ public class BoardMemberService {
     BoardMembersModels boardMember = new BoardMembersModels();
     boardMember.setUser(user);
     boardMember.setBoard(board);
-    boardMember.setRole(MemberRoles.valueOf(boardMemberRequest.getMemberRole()));
+    boardMember.setRole(boardMemberRequest.getMemberRole());
 
     BoardMembersModels savedBoardMember = boardMemberRepository.save(boardMember);
 
@@ -65,7 +65,7 @@ public class BoardMemberService {
 //        response.setId(savedBoardMember.getId());
     response.setUserId(savedBoardMember.getUser().getId());
     response.setBoardId(savedBoardMember.getBoard().getId());
-    response.setMemberRole(savedBoardMember.getRole().name());
+    response.setMemberRole(savedBoardMember.getRole());
     return response;
   }
 }
