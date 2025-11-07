@@ -1,0 +1,18 @@
+package com.group5.taskFlow.model.enums;
+
+public enum EventType {
+    BOARD_CREATED,
+    BOARD_UPDATED,
+    BOARD_DELETED,
+    MEMBER_ADDED,
+    MEMBER_REMOVED,
+    CARD_CREATED,
+    CARD_UPDATED,
+    CARD_DELETED,
+    CARD_MOVED,
+    MEMBER_ASSIGNED,
+    COMMENT_CREATED,
+    STATUS_CHANGED,
+    ASSIGNEE_CHANGED,
+    COMMENT_ADDED
+}
