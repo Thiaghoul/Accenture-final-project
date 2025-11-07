@@ -6,6 +6,7 @@ import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
+import com.group5.taskFlow.model.ColumnTypeModels;
 import com.group5.taskFlow.model.enums.Priority;
 import com.group5.taskFlow.repository.BoardRepository;
 import com.group5.taskFlow.repository.CardRepository;
@@ -50,6 +51,9 @@ public class CardServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private ActivityLogService activityLogService;
 
     @InjectMocks
     private CardService cardService;
@@ -97,7 +101,7 @@ public class CardServiceTest {
         cardRequest.setAssigneeId(assigneeId);
 
         // Manually inject mocks since @InjectMocks might not handle all constructor parameters automatically after adding new ones
-        cardService = new CardService(cardRepository, columnRepository, userRepository, boardRepository, emailService);
+        cardService = new CardService(cardRepository, columnRepository, userRepository, boardRepository, emailService, activityLogService);
     }
 
     @Test
@@ -202,6 +206,9 @@ public class CardServiceTest {
         UUID newColumnId = UUID.randomUUID();
         ColumnsModels newColumn = new ColumnsModels();
         newColumn.setId(newColumnId);
+        ColumnTypeModels columnType = new ColumnTypeModels();
+        columnType.setName("In Progress");
+        newColumn.setColumnType(columnType);
 
         when(cardRepository.findById(eq(taskId))).thenReturn(Optional.of(cardsModels));
         when(columnRepository.findById(eq(newColumnId))).thenReturn(Optional.of(newColumn));

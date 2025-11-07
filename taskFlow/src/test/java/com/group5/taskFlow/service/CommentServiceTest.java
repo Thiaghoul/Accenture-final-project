@@ -2,8 +2,10 @@ package com.group5.taskFlow.service;
 
 import com.group5.taskFlow.dto.CommentRequest;
 import com.group5.taskFlow.dto.CommentResponse;
+import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.CommentsModels;
+import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.repository.CardRepository;
 import com.group5.taskFlow.repository.CommentRepository;
@@ -42,6 +44,9 @@ public class CommentServiceTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private ActivityLogService activityLogService;
+
     @InjectMocks
     private CommentService commentService;
 
@@ -53,6 +58,8 @@ public class CommentServiceTest {
     private UserModels assignee;
     private CommentRequest commentRequest;
     private CommentsModels comment;
+    private BoardModels board;
+    private ColumnsModels column;
 
     @BeforeEach
     void setUp() {
@@ -68,10 +75,18 @@ public class CommentServiceTest {
         assignee.setId(assigneeId);
         assignee.setEmail("assignee@example.com");
 
+        board = new BoardModels();
+        board.setId(UUID.randomUUID());
+
+        column = new ColumnsModels();
+        column.setId(UUID.randomUUID());
+        column.setBoard(board);
+
         card = new CardsModels();
         card.setId(taskId);
         card.setTitle("Test Task");
         card.setAssignee(assignee);
+        card.setColumn(column);
 
         commentRequest = new CommentRequest();
         commentRequest.setUserId(userId);
@@ -83,6 +98,8 @@ public class CommentServiceTest {
         comment.setCard(card);
         comment.setUser(user);
         comment.setCreatedAt(Instant.now());
+
+        commentService = new CommentService(commentRepository, cardRepository, userRepository, emailService, activityLogService);
     }
 
     @Test

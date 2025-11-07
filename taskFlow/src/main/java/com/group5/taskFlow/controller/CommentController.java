@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,11 +25,13 @@ public class CommentController {
     }
 
     @PostMapping
+    @PreAuthorize("@permissionService.isBoardMember(principal.name, #projectId)")
     public ResponseEntity<CommentResponse> createComment(@PathVariable UUID projectId, @PathVariable UUID taskId, @Valid @RequestBody CommentRequest commentRequest) {
         return new ResponseEntity<>(commentService.save(taskId, commentRequest), HttpStatus.CREATED);
     }
 
     @GetMapping
+    @PreAuthorize("@permissionService.isBoardMember(principal.name, #projectId)")
     public ResponseEntity<List<CommentResponse>> getCommentsByTaskId(@PathVariable UUID projectId, @PathVariable UUID taskId) {
         return ResponseEntity.ok(commentService.findByTaskId(taskId));
     }

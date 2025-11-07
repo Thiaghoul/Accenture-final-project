@@ -7,6 +7,7 @@ import com.group5.taskFlow.service.CardService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -38,18 +39,21 @@ public class BoardController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@permissionService.isBoardMember(principal.name, #id)")
     public ResponseEntity<BoardResponse> getBoardById(@PathVariable UUID id) {
         BoardResponse board = boardService.findById(id);
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@permissionService.isBoardOwner(principal.name, #id)")
     public ResponseEntity<BoardResponse> updateBoard(@PathVariable UUID id, @RequestBody BoardRequest boardRequest) {
         BoardResponse updatedBoard = boardService.update(id, boardRequest);
         return new ResponseEntity<>(updatedBoard, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@permissionService.isBoardOwner(principal.name, #id)")
     public ResponseEntity<Void> deleteBoard(@PathVariable UUID id) {
         boardService.deleteById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -57,18 +61,21 @@ public class BoardController {
 
     // Member Endpoints
     @GetMapping("/{projectId}/members")
+    @PreAuthorize("@permissionService.isBoardMember(principal.name, #projectId)")
     public ResponseEntity<List<UserResponse>> getProjectMembers(@PathVariable UUID projectId) {
         List<UserResponse> members = boardService.getMembers(projectId);
         return ResponseEntity.ok(members);
     }
 
     @PostMapping("/{projectId}/members")
+    @PreAuthorize("@permissionService.isBoardOwner(principal.name, #projectId)")
     public ResponseEntity<Void> addProjectMember(@PathVariable UUID projectId, @RequestBody AddMemberRequest addMemberRequest) {
         boardService.addMember(projectId, addMemberRequest.getUserId(), addMemberRequest.getRole());
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{projectId}/members/{userId}")
+    @PreAuthorize("@permissionService.isBoardOwner(principal.name, #projectId)")
     public ResponseEntity<Void> removeProjectMember(@PathVariable UUID projectId, @PathVariable UUID userId) {
         boardService.removeMember(projectId, userId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

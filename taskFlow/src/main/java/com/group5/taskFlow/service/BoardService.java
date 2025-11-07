@@ -8,6 +8,7 @@ import com.group5.taskFlow.model.BoardMembersModels;
 import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.model.enums.MemberRoles;
+import com.group5.taskFlow.model.enums.EventType;
 import com.group5.taskFlow.repository.BoardMembersRepository;
 import com.group5.taskFlow.repository.BoardRepository;
 import com.group5.taskFlow.repository.UserRepository;
@@ -27,12 +28,14 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
     private final BoardMembersRepository boardMembersRepository;
+    private final ActivityLogService activityLogService;
 
     @Autowired
-    public BoardService(BoardRepository boardRepository, UserRepository userRepository, BoardMembersRepository boardMembersRepository) {
+    public BoardService(BoardRepository boardRepository, UserRepository userRepository, BoardMembersRepository boardMembersRepository, ActivityLogService activityLogService) {
         this.boardRepository = boardRepository;
         this.userRepository = userRepository;
         this.boardMembersRepository = boardMembersRepository;
+        this.activityLogService = activityLogService;
     }
 
     @Transactional
@@ -48,6 +51,7 @@ public class BoardService {
         board.setUpdatedAt(Instant.now());
 
         BoardModels savedBoard = boardRepository.save(board);
+        activityLogService.logActivity(EventType.BOARD_CREATED, "Board created: " + savedBoard.getName(), owner, savedBoard);
         return toBoardResponse(savedBoard);
     }
 
@@ -75,11 +79,15 @@ public class BoardService {
         board.setUpdatedAt(Instant.now());
 
         BoardModels updatedBoard = boardRepository.save(board);
+        activityLogService.logActivity(EventType.BOARD_UPDATED, "Board updated: " + updatedBoard.getName(), updatedBoard.getOwner(), updatedBoard);
         return toBoardResponse(updatedBoard);
     }
 
     @Transactional
     public void deleteById(UUID id) {
+        BoardModels board = boardRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Board not found with id: " + id));
+        activityLogService.logActivity(EventType.BOARD_DELETED, "Board deleted: " + board.getName(), board.getOwner(), board);
         boardRepository.deleteById(id);
     }
 
@@ -101,6 +109,7 @@ public class BoardService {
         newMember.setRole(role);
 
         boardMembersRepository.save(newMember);
+        activityLogService.logActivity(EventType.MEMBER_ADDED, "Member added: " + user.getEmail(), board.getOwner(), board);
     }
 
     public List<UserResponse> getMembers(UUID projectId) {
@@ -124,6 +133,7 @@ public class BoardService {
                 .orElseThrow(() -> new EntityNotFoundException("User is not a member of this board."));
 
         boardMembersRepository.delete(member);
+        activityLogService.logActivity(EventType.MEMBER_REMOVED, "Member removed: " + user.getEmail(), board.getOwner(), board);
     }
 
     private BoardResponse toBoardResponse(BoardModels board) {

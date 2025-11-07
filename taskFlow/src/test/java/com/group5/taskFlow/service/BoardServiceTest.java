@@ -6,10 +6,8 @@ import com.group5.taskFlow.model.BoardMembersModels;
 import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.model.enums.MemberRoles;
-import com.group5.taskFlow.repository.BoardMemberRepository;
+import com.group5.taskFlow.repository.BoardMembersRepository;
 import com.group5.taskFlow.repository.BoardRepository;
-import com.group5.taskFlow.repository.ColumnRepository;
-import com.group5.taskFlow.repository.ColumnTypeRepository;
 import com.group5.taskFlow.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,19 +32,13 @@ public class BoardServiceTest {
     private BoardRepository boardRepository;
 
     @Mock
-    private ColumnRepository columnRepository;
-
-    @Mock
-    private ColumnTypeRepository columnTypeRepository;
-
-    @Mock
-    private CardService cardService;
-
-    @Mock
     private UserRepository userRepository;
 
     @Mock
-    private BoardMemberRepository boardMemberRepository;
+    private BoardMembersRepository boardMembersRepository;
+
+    @Mock
+    private ActivityLogService activityLogService;
 
     @InjectMocks
     private BoardService boardService;
@@ -86,7 +78,6 @@ public class BoardServiceTest {
     public void save_shouldReturnBoardResponse() {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(owner));
         when(boardRepository.save(any(BoardModels.class))).thenReturn(boardModels);
-        when(boardMemberRepository.save(any(BoardMembersModels.class))).thenReturn(new BoardMembersModels()); // Mock saving the owner as a member
 
         BoardResponse result = boardService.save(boardRequest, owner.getEmail());
 

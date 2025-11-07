@@ -37,14 +37,14 @@ public class JwtTokenProvider {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
-                .signWith(key, SignatureAlgorithm.HS512)
+                .signWith(key)
                 .compact();
     }
 
     /**
      * Generates a JWT token for an authenticated user.
      * This method extracts the username from the Authentication object and delegates to the generateToken(String username) method.
-     * @param authentication The authentication object containing the user's principal.
+     * @param authentication The authentication object containing the user\'s principal.
      * @return A JWT token string.
      */
     public String generateToken(Authentication authentication) {

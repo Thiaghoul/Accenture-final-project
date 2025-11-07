@@ -5,6 +5,7 @@ import com.group5.taskFlow.dto.CommentResponse;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.CommentsModels;
 import com.group5.taskFlow.model.UserModels;
+import com.group5.taskFlow.model.enums.EventType;
 import com.group5.taskFlow.repository.CardRepository;
 import com.group5.taskFlow.repository.CommentRepository;
 import com.group5.taskFlow.repository.UserRepository;
@@ -25,13 +26,15 @@ public class CommentService {
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final ActivityLogService activityLogService;
 
     @Autowired
-    public CommentService(CommentRepository commentRepository, CardRepository cardRepository, UserRepository userRepository, EmailService emailService) {
+    public CommentService(CommentRepository commentRepository, CardRepository cardRepository, UserRepository userRepository, EmailService emailService, ActivityLogService activityLogService) {
         this.commentRepository = commentRepository;
         this.cardRepository = cardRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.activityLogService = activityLogService;
     }
 
     @Transactional
@@ -64,6 +67,7 @@ public class CommentService {
             );
         }
 
+        activityLogService.logActivity(EventType.COMMENT_CREATED, "Comment added to card: " + card.getTitle(), user, card.getColumn().getBoard());
         return toCommentResponse(savedComment);
     }
 

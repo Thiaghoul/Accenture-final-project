@@ -6,6 +6,7 @@ import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
+import com.group5.taskFlow.model.enums.EventType;
 import com.group5.taskFlow.repository.BoardRepository;
 import com.group5.taskFlow.repository.CardRepository;
 import com.group5.taskFlow.repository.ColumnRepository;
@@ -29,14 +30,16 @@ public class CardService {
   private final UserRepository userRepository;
   private final BoardRepository boardRepository;
   private final EmailService emailService;
+  private final ActivityLogService activityLogService;
 
   @Autowired
-  public CardService(CardRepository cardRepository, ColumnRepository columnRepository, UserRepository userRepository, BoardRepository boardRepository, EmailService emailService) {
+  public CardService(CardRepository cardRepository, ColumnRepository columnRepository, UserRepository userRepository, BoardRepository boardRepository, EmailService emailService, ActivityLogService activityLogService) {
     this.cardRepository = cardRepository;
     this.columnRepository = columnRepository;
     this.userRepository = userRepository;
     this.boardRepository = boardRepository;
     this.emailService = emailService;
+    this.activityLogService = activityLogService;
   }
 
   @Transactional
@@ -73,6 +76,7 @@ public class CardService {
       emailService.sendSimpleMessage(assignee.getEmail(), "You have been assigned a new task", "You have been assigned the task: " + savedCard.getTitle());
     }
 
+    activityLogService.logActivity(EventType.CARD_CREATED, "Card created: " + savedCard.getTitle(), board.getOwner(), board);
     return toCardResponse(savedCard);
   }
 
@@ -121,11 +125,15 @@ public class CardService {
       emailService.sendSimpleMessage(assignee.getEmail(), "A task assigned to you has been updated", "The task: " + updatedCard.getTitle() + " has been updated.");
     }
 
+    activityLogService.logActivity(EventType.CARD_UPDATED, "Card updated: " + updatedCard.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
     return toCardResponse(updatedCard);
   }
 
   @Transactional
   public void deleteById(UUID id) {
+    CardsModels card = cardRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
+    activityLogService.logActivity(EventType.CARD_DELETED, "Card deleted: " + card.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
     cardRepository.deleteById(id);
   }
 
@@ -159,7 +167,7 @@ public class CardService {
         card.setUpdatedAt(Instant.now());
 
         cardRepository.save(card);
-
+        activityLogService.logActivity(EventType.CARD_MOVED, "Card " + card.getTitle() + " moved to " + newColumn.getColumnType().getName(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
       }
 
     
@@ -196,10 +204,10 @@ public class CardService {
 
     
 
+        activityLogService.logActivity(EventType.MEMBER_ASSIGNED, "User " + user.getEmail() + " assigned to card " + card.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
         return toCardResponse(updatedCard);
 
       }
 
     }
-
     
