@@ -3,6 +3,7 @@ package com.group5.taskFlow.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.group5.taskFlow.dto.CardRequest;
 import com.group5.taskFlow.dto.CardResponse;
+import com.group5.taskFlow.security.JwtTokenProvider;
 import com.group5.taskFlow.service.CardService;
 import com.group5.taskFlow.service.PermissionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -41,6 +43,12 @@ public class CardControllerTest {
 
     @MockBean
     private PermissionService permissionService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private ObjectMapper objectMapper;
