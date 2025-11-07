@@ -48,6 +48,7 @@ public class BoardMemberService {
         boardMemberRepository.deleteByBoardIdAndUserId(boardId, userId);
     }
 
+
     public BoardMemberResponse createBoardMember(BoardMemberRequest boardMemberRequest) {
         log.info("Creating board member with user id: {} and board id: {}", boardMemberRequest.getUserId(), boardMemberRequest.getBoardId());
         UserModels user = userRepository.findById(boardMemberRequest.getUserId())
@@ -56,10 +57,13 @@ public class BoardMemberService {
         BoardModels board = boardRepository.findById(boardMemberRequest.getBoardId())
                 .orElseThrow(() -> new EntityNotFoundException("Board not found with id: " + boardMemberRequest.getBoardId()));
         log.info("Board found with id: {}", board.getId());
+  
         BoardMembersModels boardMember = new BoardMembersModels();
         boardMember.setUser(user);
         boardMember.setBoard(board);
-        boardMember.setRole(boardMemberRequest.getRole());
+        boardMember.setRole(boardMemberRequest.getMemberRole());
+
+    BoardMembersModels savedBoardMember = boardMemberRepository.save(boardMember);;
         log.info("Board member role set to: {}", boardMember.getRole());
         BoardMembersModels savedBoardMember = boardMemberRepository.save(boardMember);
         log.info("Board member saved with id: {}", savedBoardMember.getId());

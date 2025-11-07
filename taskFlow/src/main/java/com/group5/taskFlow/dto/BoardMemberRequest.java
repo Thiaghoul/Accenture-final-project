@@ -9,5 +9,5 @@ import java.util.UUID;
 public class BoardMemberRequest {
     private UUID userId;
     private UUID boardId;
-    private MemberRoles role;
+    private MemberRoles memberRole;
 }
