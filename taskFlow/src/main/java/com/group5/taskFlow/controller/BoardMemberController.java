@@ -6,7 +6,7 @@ import com.group5.taskFlow.dto.BoardResponse;
 import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.service.BoardMemberService;
 import com.group5.taskFlow.service.BoardService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/board-members")
+@Slf4j
 public class BoardMemberController {
 
   private final BoardMemberService boardMemberService;
@@ -27,6 +28,7 @@ public class BoardMemberController {
 
   @GetMapping("/user/{userId}/boards")
   public ResponseEntity<List<BoardResponse>> getBoardsByUserId(@PathVariable UUID userId) {
+    log.info("Received request to get boards for user id: {}", userId);
     List<BoardModels> boards = boardMemberService.findBoardsByUserId(userId);
     var listResult = boards.stream().map(boardService::toBoardResponse).toList();
 
@@ -36,6 +38,7 @@ public class BoardMemberController {
 
   @PostMapping
   public ResponseEntity<BoardMemberResponse> createBoardMember(@RequestBody BoardMemberRequest boardMemberRequest) {
+    log.info("Received request to create board member");
     BoardMemberResponse newBoardMember = boardMemberService.createBoardMember(boardMemberRequest);
     return ResponseEntity.ok(newBoardMember);
   }
