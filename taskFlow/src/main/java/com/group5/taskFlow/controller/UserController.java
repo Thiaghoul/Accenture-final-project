@@ -1,13 +1,12 @@
 package com.group5.taskFlow.controller;
 
-import com.group5.taskFlow.dto.UserLoginRequest;
-import com.group5.taskFlow.dto.UserRegisterResponse;
-import com.group5.taskFlow.dto.UserRequest;
-import com.group5.taskFlow.dto.UserResponse;
-import com.group5.taskFlow.dto.UserUpdateRequest;
+import com.group5.taskFlow.dto.*;
+import com.group5.taskFlow.service.LoginHistoryService;
 import com.group5.taskFlow.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +19,11 @@ import java.util.UUID;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final LoginHistoryService loginHistoryService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, LoginHistoryService loginHistoryService) {
         this.userService = userService;
+        this.loginHistoryService = loginHistoryService;
     }
 
     @PostMapping("/register")
@@ -51,6 +52,13 @@ public class UserController {
         log.info("Received request to get user with id: {}", id);
         UserResponse user = userService.getUserById(id);
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/{id}/login-history")
+    public ResponseEntity<Page<LoginHistoryResponse>> getLoginHistory(@PathVariable UUID id, Pageable pageable) {
+        log.info("Received request to get login history for user with id: {}", id);
+        Page<LoginHistoryResponse> history = loginHistoryService.getLoginHistory(id, pageable);
+        return ResponseEntity.ok(history);
     }
 
     @PutMapping("/{id}")
