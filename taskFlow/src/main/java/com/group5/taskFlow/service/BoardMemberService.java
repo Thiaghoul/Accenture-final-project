@@ -23,11 +23,13 @@ public class BoardMemberService {
     private final BoardMemberRepository boardMemberRepository;
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
+    private final EmailService emailService;
 
-    public BoardMemberService(BoardMemberRepository boardMemberRepository, UserRepository userRepository, BoardRepository boardRepository) {
+    public BoardMemberService(BoardMemberRepository boardMemberRepository, UserRepository userRepository, BoardRepository boardRepository, EmailService emailService) {
         this.boardMemberRepository = boardMemberRepository;
         this.userRepository = userRepository;
         this.boardRepository = boardRepository;
+        this.emailService = emailService;
     }
 
     public List<BoardModels> findBoardsByUserId(UUID userId) {
@@ -63,10 +65,12 @@ public class BoardMemberService {
         boardMember.setBoard(board);
         boardMember.setRole(boardMemberRequest.getMemberRole());
 
-    BoardMembersModels savedBoardMember = boardMemberRepository.save(boardMember);;
-        log.info("Board member role set to: {}", boardMember.getRole());
         BoardMembersModels savedBoardMember = boardMemberRepository.save(boardMember);
-        log.info("Board member saved with id: {}", savedBoardMember.getId());
+
+        String message = String.format("You have been invited to the board: %s", board.getName());
+        emailService.sendSimpleMessage(user.getEmail(), "You have been invited to a board", message);
+        log.info("Invitation email sent to {}", user.getEmail());
+
         return toBoardMemberResponse(savedBoardMember);
     }
 
@@ -74,7 +78,7 @@ public class BoardMemberService {
         BoardMemberResponse boardMemberResponse = new BoardMemberResponse();
         boardMemberResponse.setUserId(boardMember.getUser().getId());
         boardMemberResponse.setBoardId(boardMember.getBoard().getId());
-        boardMemberResponse.setRole(boardMember.getRole());
+        boardMemberResponse.setMemberRole(boardMember.getRole());
         return boardMemberResponse;
     }
 }
