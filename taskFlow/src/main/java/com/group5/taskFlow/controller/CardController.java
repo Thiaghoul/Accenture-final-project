@@ -17,7 +17,6 @@ public class CardController {
 
   private final CardService cardService;
 
-  @Autowired
   public CardController(CardService cardService) {
     this.cardService = cardService;
   }
