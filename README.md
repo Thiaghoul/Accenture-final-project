@@ -1,45 +1,80 @@
-# Accenture-final-project
+# Task Flow
 
-nome do projeto: TaskFlow
+Task Flow is a comprehensive task management application designed to streamline project workflows. It features a robust backend powered by Spring Boot and a modern, responsive frontend built with React. This application allows users to manage projects, tasks, and teams in a collaborative environment, visualized through a Kanban-style board.
 
-## Objetivo do projeto
+## Features
 
-- Desevolver um MVP
-- Implementar funcionalidades de criação, atribuição e acompanhamento de tarefas
+- **User Authentication:** Secure user registration and login with JWT-based authentication.
+- **Project Management:** Create and manage projects (boards), invite members, and assign roles.
+- **Task Management:** Create, update, and assign tasks with details like priority, due date, and description.
+- **Kanban Board:** Visualize and manage tasks in a workflow using a drag-and-drop Kanban board.
+- **Collaboration:** Add comments to tasks and view a complete activity log for each task.
+- **Role-Based Access Control (RBAC):** Granular permissions for different user roles (e.g., Manager, Editor, Viewer).
 
-## Funcionalidades do Sistema
+## Tech Stack
 
-- Autenticação e Perfis
-  - Cadastro e login de usuários (email/senha, autenticação jwt)
-  - Perfis: administrador, gerente e colaborador
-  - recuperação de senha via e-mail
-- Gestão de Tarefas
-  - criar, editar, excluir e atribuir tarefas
-  - campos: título, descrição, responsável, status, prioridade, data de entrega
-  - visualização em lista e em quadro (kanban simples)
-  - filtro e busca por status, responsavel e prioridade
-- Gestão de Projetos
-  - criar projetos e associar tarefas a eles
-  - definir nome, descrição e equipe envolvida.
-  - painel com resumo do progresso (percentual concluido)
-- Colaboração
-  -  comentários em tarefas
-  -  notificações básicas (ex: "tarefa atribuída a você")
-  -  Histórico de alterações (log de atividade por tarefa).
-- Dashboard e Relatórios
-  - painel principal com contagem de tarefas por status (A Fazer / Em Progresso / Concluído)
-  - Relatório por usuário e por projeto
-  - Exportação simples (CSV ou PDF)
-- Configurações e Acesso
-  - Gestão de usuário (somente para administrador)
-  - permissões básicas por papel.
-  - configurações de idioma e tema (opcional).
+### Backend
 
-## Ferramentas
+- **Java 21**
+- **Spring Boot 3.2.5**
+- **Spring Security (with JWT)**
+- **Spring Data JPA**
+- **Maven**
+- **MySQL (for production)**
+- **H2 Database (for development)**
 
-Servidor:
-- Java
-- JDK 21 SE
+### Frontend
 
-Cliente:
-- React
+- **React**
+- **Vite**
+- **TypeScript**
+- **Tailwind CSS**
+- **Shadcn UI**
+- **Axios**
+- **React Router**
+
+## Getting Started
+
+### Prerequisites
+
+- **Java 21** or later
+- **Maven**
+- **Node.js** and **npm**
+
+### Installation and Running the Application
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/Thiaghoul/Accenture-final-project.git
+    cd Accenture-final-project
+    ```
+
+2.  **Run the Backend:**
+
+    Navigate to the `taskFlow` directory and run the Spring Boot application using Maven:
+
+    ```bash
+    cd taskFlow
+    mvn spring-boot:run
+    ```
+
+    The backend will start on `http://localhost:8080`. By default, it uses an in-memory H2 database.
+
+3.  **Run the Frontend:**
+
+    In a new terminal, navigate to the `FrontTaskFlow5` directory, install the dependencies, and start the development server:
+
+    ```bash
+    cd ../FrontTaskFlow5
+    npm install
+    npm run dev
+    ```
+
+    The frontend will be available at `http://localhost:5173`.
+
+## API Documentation
+
+The backend API is documented using OpenAPI (Swagger). Once the backend is running, you can access the Swagger UI at:
+
+[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
