@@ -12,8 +12,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "comments")
 @Data
-@Getter
-@Setter
 public class CommentsModels implements Serializable {
 
     static final long serialVersionUID = 1L;

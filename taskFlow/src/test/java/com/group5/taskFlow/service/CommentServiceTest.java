@@ -98,7 +98,7 @@ public class CommentServiceTest {
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getText()).isEqualTo(commentRequest.getText());
+        assertThat(result.getContent()).isEqualTo(commentRequest.getText());
         verify(emailService, times(1)).sendSimpleMessage(eq(assignee.getEmail()), anyString(), anyString());
     }
 
@@ -152,7 +152,7 @@ public class CommentServiceTest {
         // Assert
         assertThat(results).isNotNull();
         assertThat(results).hasSize(1);
-        assertThat(results.get(0).getText()).isEqualTo(comment.getText());
+        assertThat(results.get(0).getContent()).isEqualTo(comment.getText());
         verify(commentRepository, times(1)).findByCardId(cardId);
     }
 }

@@ -12,6 +12,10 @@ import jakarta.persistence.EntityNotFoundException;
 import com.group5.taskFlow.security.JwtTokenProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.BadCredentialsException;
+import com.group5.taskFlow.exception.EmailAlreadyExistsException;
+import com.group5.taskFlow.dto.UserUpdateRequest;
+
 
 import java.util.Calendar;
 import java.util.UUID;
@@ -36,7 +40,7 @@ public class UserService {
 
     public UserResponse save(UserRequest userRequest) {
         if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("User with this email already exists.");
+            throw new EmailAlreadyExistsException("User with this email already exists.");
         }
         
         UserModels userModels = new UserModels();
@@ -53,10 +57,10 @@ public class UserService {
 
     public UserRegisterResponse authenticateUser(String email, String password) {
         UserModels user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password."));
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password.");
+            throw new BadCredentialsException("Invalid email or password.");
         }
 
         String token = jwtTokenProvider.generateToken(user.getEmail());
@@ -75,18 +79,12 @@ public class UserService {
         return toUserResponse(user);
     }
 
-    public UserResponse updateUser(UUID id, UserRequest userRequest) {
+    public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest) {
         UserModels existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
 
-        existingUser.setEmail(userRequest.getEmail());
-        existingUser.setFirstName(userRequest.getFirstName());
-        existingUser.setLastName(userRequest.getLastName());
-        existingUser.setRoles(userRequest.getRoles().stream().map(UserRoles::name).collect(Collectors.toSet()));
-
-        if (userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()) {
-            existingUser.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
-        }
+        existingUser.setFirstName(userUpdateRequest.getFirstName());
+        existingUser.setLastName(userUpdateRequest.getLastName());
 
         UserModels updatedUser = userRepository.save(existingUser);
         return toUserResponse(updatedUser);

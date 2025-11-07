@@ -3,6 +3,8 @@ package com.group5.taskFlow.service;
 import com.group5.taskFlow.dto.UserRegisterResponse;
 import com.group5.taskFlow.dto.UserRequest;
 import com.group5.taskFlow.dto.UserResponse;
+import com.group5.taskFlow.dto.UserUpdateRequest;
+import com.group5.taskFlow.exception.EmailAlreadyExistsException;
 import com.group5.taskFlow.model.PasswordResetToken;
 import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.model.enums.UserRoles;
@@ -16,11 +18,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,6 +52,7 @@ public class UserServiceTest {
 
     private UserModels userModels;
     private UserRequest userRequest;
+    private UserUpdateRequest userUpdateRequest;
 
     @BeforeEach
     void setUp() {
@@ -69,8 +71,13 @@ public class UserServiceTest {
         userRequest.setLastName("User");
         userRequest.setRoles(new HashSet<>(Collections.singletonList(UserRoles.USER)));
 
+        userUpdateRequest = new UserUpdateRequest();
+        userUpdateRequest.setFirstName("Updated");
+        userUpdateRequest.setLastName("Name");
+
         // Manually inject mocks since @InjectMocks might not handle all constructor parameters automatically after adding new ones
         userService = new UserService(userRepository, passwordEncoder, jwtTokenProvider, passwordResetTokenRepository, emailService);
+
     }
 
     @Test
@@ -88,7 +95,7 @@ public class UserServiceTest {
     public void registerUser_whenEmailExists_shouldThrowException() {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userModels));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EmailAlreadyExistsException.class, () -> {
             userService.save(userRequest);
         });
 
@@ -112,7 +119,7 @@ public class UserServiceTest {
     public void authenticateUser_whenEmailNotFound_shouldThrowException() {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(BadCredentialsException.class, () -> {
             userService.authenticateUser("wrong@example.com", "password");
         });
     }
@@ -122,9 +129,22 @@ public class UserServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userModels));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(BadCredentialsException.class, () -> {
             userService.authenticateUser("test@example.com", "wrongpassword");
         });
+    }
+
+    @Test
+    public void updateUser_shouldUpdateOnlyFirstNameAndLastName() {
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(userModels));
+        when(userRepository.save(any(UserModels.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserResponse updatedUser = userService.updateUser(userModels.getId(), userUpdateRequest);
+
+        assertThat(updatedUser.getFirstName()).isEqualTo("Updated");
+        assertThat(updatedUser.getLastName()).isEqualTo("Name");
+        assertThat(updatedUser.getEmail()).isEqualTo("test@example.com"); // Should not change
+        verify(userRepository, times(1)).save(any(UserModels.class));
     }
 
     @Test
@@ -149,7 +169,6 @@ public class UserServiceTest {
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getEmail()).isEqualTo(userModels.getEmail());
     }
-
     @Test
     void createPasswordResetTokenForUser_whenUserExists_shouldCreateTokenAndSendEmail() {
         // Arrange

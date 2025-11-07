@@ -8,8 +8,8 @@ import java.util.UUID;
 @Data
 public class CommentResponse {
     private UUID id;
-    private String text;
-    private Instant createdAt;
-    private UUID cardId;
+    private String content;
     private UUID userId;
+    private String userName;
+    private Instant createdAt;
 }

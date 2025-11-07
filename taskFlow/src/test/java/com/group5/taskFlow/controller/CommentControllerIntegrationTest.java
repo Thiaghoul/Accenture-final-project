@@ -118,7 +118,7 @@ public class CommentControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.text").value("This is a test comment."));
+                .andExpect(jsonPath("$.content").value("This is a test comment."));
 
         verify(commentRepository, times(1)).save(any(CommentsModels.class));
         verify(emailService, times(1)).sendSimpleMessage(eq(assignee.getEmail()), anyString(), anyString());
@@ -198,7 +198,7 @@ public class CommentControllerIntegrationTest {
                         .header("Authorization", "Bearer " + validJwtToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].text").value(comment.getText()));
+                .andExpect(jsonPath("$[0].content").value(comment.getText()));
 
         verify(commentRepository, times(1)).findByCardId(cardId);
     }

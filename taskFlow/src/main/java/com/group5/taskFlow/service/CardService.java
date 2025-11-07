@@ -22,125 +22,125 @@ import java.util.stream.Collectors;
 @Service
 public class CardService {
 
-  private final CardRepository cardRepository;
-  private final ColumnRepository columnRepository;
-  private final UserRepository userRepository;
-  private final BoardRepository boardRepository;
-  private final EmailService emailService;
+    private final CardRepository cardRepository;
+    private final ColumnRepository columnRepository;
+    private final UserRepository userRepository;
+    private final BoardRepository boardRepository;
+    private final EmailService emailService;
 
-  @Autowired
-  public CardService(CardRepository cardRepository, ColumnRepository columnRepository, UserRepository userRepository, BoardRepository boardRepository, EmailService emailService) {
-    this.cardRepository = cardRepository;
-    this.columnRepository = columnRepository;
-    this.userRepository = userRepository;
-    this.boardRepository = boardRepository;
-    this.emailService = emailService;
-  }
-
-  public CardResponse save(CardRequest cardRequest) {
-    ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
-            .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
-
-    UserModels assignee = null;
-    if (cardRequest.getAssigneeId() != null) {
-      assignee = userRepository.findById(cardRequest.getAssigneeId())
-              .orElseThrow(() -> new EntityNotFoundException("Assignee not found with id: " + cardRequest.getAssigneeId()));
+    @Autowired
+    public CardService(CardRepository cardRepository, ColumnRepository columnRepository, UserRepository userRepository, BoardRepository boardRepository, EmailService emailService) {
+        this.cardRepository = cardRepository;
+        this.columnRepository = columnRepository;
+        this.userRepository = userRepository;
+        this.boardRepository = boardRepository;
+        this.emailService = emailService;
     }
 
-    CardsModels card = new CardsModels();
-    card.setTitle(cardRequest.getTitle());
-    card.setDescription(cardRequest.getDescription());
-    card.setPriority(cardRequest.getPriority());
-    card.setDueDate(cardRequest.getDueDate());
-    card.setColumn(column);
-    card.setAssignee(assignee);
-    card.setCreatedAt(Instant.now());
-    card.setUpdatedAt(Instant.now());
+    public CardResponse save(CardRequest cardRequest) {
+        ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
+                .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
 
-    CardsModels savedCard = cardRepository.save(card);
+        UserModels assignee = null;
+        if (cardRequest.getAssigneeId() != null) {
+            assignee = userRepository.findById(cardRequest.getAssigneeId())
+                    .orElseThrow(() -> new EntityNotFoundException("Assignee not found with id: " + cardRequest.getAssigneeId()));
+        }
 
-    if (assignee != null) {
-      emailService.sendSimpleMessage(assignee.getEmail(), "You have been assigned a new task", "You have been assigned the task: " + savedCard.getTitle());
+        CardsModels card = new CardsModels();
+        card.setTitle(cardRequest.getTitle());
+        card.setDescription(cardRequest.getDescription());
+        card.setPriority(cardRequest.getPriority());
+        card.setDueDate(cardRequest.getDueDate());
+        card.setColumn(column);
+        card.setAssignee(assignee);
+        card.setCreatedAt(Instant.now());
+        card.setUpdatedAt(Instant.now());
+
+        CardsModels savedCard = cardRepository.save(card);
+
+        if (assignee != null) {
+            emailService.sendSimpleMessage(assignee.getEmail(), "You have been assigned a new task", "You have been assigned the task: " + savedCard.getTitle());
+        }
+
+        return toCardResponse(savedCard);
     }
 
-    return toCardResponse(savedCard);
-  }
-
-  public List<CardResponse> findAll() {
-    return cardRepository.findAll().stream()
-            .map(this::toCardResponse)
-            .collect(Collectors.toList());
-  }
-
-  public CardResponse findById(UUID id) {
-    CardsModels card = cardRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
-    return toCardResponse(card);
-  }
-
-  public CardResponse update(UUID id, CardRequest cardRequest) {
-    CardsModels card = cardRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
-
-    ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
-            .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
-
-    UserModels assignee = null;
-    if (cardRequest.getAssigneeId() != null) {
-      assignee = userRepository.findById(cardRequest.getAssigneeId())
-              .orElseThrow(() -> new EntityNotFoundException("Assignee not found with id: " + cardRequest.getAssigneeId()));
+    public List<CardResponse> findAll() {
+        return cardRepository.findAll().stream()
+                .map(this::toCardResponse)
+                .collect(Collectors.toList());
     }
 
-    card.setTitle(cardRequest.getTitle());
-    card.setDescription(cardRequest.getDescription());
-    card.setPriority(cardRequest.getPriority());
-    card.setDueDate(cardRequest.getDueDate());
-    card.setColumn(column);
-    card.setAssignee(assignee);
-    card.setCompletionPercentage(cardRequest.getCompletionPercentage());
-    card.setUpdatedAt(Instant.now());
-
-    CardsModels updatedCard = cardRepository.save(card);
-
-    if (assignee != null) {
-      emailService.sendSimpleMessage(assignee.getEmail(), "A task assigned to you has been updated", "The task: " + updatedCard.getTitle() + " has been updated.");
+    public CardResponse findById(UUID id) {
+        CardsModels card = cardRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
+        return toCardResponse(card);
     }
 
-    return toCardResponse(updatedCard);
-  }
+    public CardResponse update(UUID id, CardRequest cardRequest) {
+        CardsModels card = cardRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
 
-  public void deleteById(UUID id) {
-    cardRepository.deleteById(id);
-  }
+        ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
+                .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
 
-  public CardResponse toCardResponse(CardsModels card) {
-    CardResponse cardResponse = new CardResponse();
-    cardResponse.setId(card.getId());
-    cardResponse.setTitle(card.getTitle());
-    cardResponse.setDescription(card.getDescription());
-    cardResponse.setPriority(card.getPriority());
-    cardResponse.setDueDate(card.getDueDate());
-    cardResponse.setCompletionPercentage(card.getCompletionPercentage());
-    cardResponse.setCreatedAt(card.getCreatedAt());
-    cardResponse.setUpdatedAt(card.getUpdatedAt());
-    cardResponse.setColumnId(card.getColumn().getId());
-    if (card.getAssignee() != null) {
-      cardResponse.setAssigneeId(card.getAssignee().getId());
+        UserModels assignee = null;
+        if (cardRequest.getAssigneeId() != null) {
+            assignee = userRepository.findById(cardRequest.getAssigneeId())
+                    .orElseThrow(() -> new EntityNotFoundException("Assignee not found with id: " + cardRequest.getAssigneeId()));
+        }
+
+        card.setTitle(cardRequest.getTitle());
+        card.setDescription(cardRequest.getDescription());
+        card.setPriority(cardRequest.getPriority());
+        card.setDueDate(cardRequest.getDueDate());
+        card.setColumn(column);
+        card.setAssignee(assignee);
+        card.setCompletionPercentage(cardRequest.getCompletionPercentage());
+        card.setUpdatedAt(Instant.now());
+
+        CardsModels updatedCard = cardRepository.save(card);
+
+        if (assignee != null) {
+            emailService.sendSimpleMessage(assignee.getEmail(), "A task assigned to you has been updated", "The task: " + updatedCard.getTitle() + " has been updated.");
+        }
+
+        return toCardResponse(updatedCard);
     }
-    return cardResponse;
-  }
 
-  public List<CardResponse> getAllCardOfBoard(UUID id) {
-    return cardRepository.findByBoardId(id).stream()
-            .map(this::toCardResponse)
-            .collect(Collectors.toList());
-  }
+    public void deleteById(UUID id) {
+        cardRepository.deleteById(id);
+    }
 
-  public void changeStatusWithId(UUID id) {
-    var result = cardRepository.findById(id);
-    CardsModels card = result.get();
+    public CardResponse toCardResponse(CardsModels card) {
+        CardResponse cardResponse = new CardResponse();
+        cardResponse.setId(card.getId());
+        cardResponse.setTitle(card.getTitle());
+        cardResponse.setDescription(card.getDescription());
+        cardResponse.setPriority(card.getPriority());
+        cardResponse.setDueDate(card.getDueDate());
+        cardResponse.setCompletionPercentage(card.getCompletionPercentage());
+        cardResponse.setCreatedAt(card.getCreatedAt());
+        cardResponse.setUpdatedAt(card.getUpdatedAt());
+        cardResponse.setColumnId(card.getColumn().getId());
+        if (card.getAssignee() != null) {
+            cardResponse.setAssigneeId(card.getAssignee().getId());
+        }
+        return cardResponse;
+    }
 
-    card.setCompletionPercentage(1);
-    cardRepository.save(card);
-  }
+    public List<CardResponse> getAllCardOfBoard(UUID id) {
+        return cardRepository.findByBoardId(id).stream()
+                .map(this::toCardResponse)
+                .collect(Collectors.toList());
+    }
+
+    public void changeStatusWithId(UUID id) {
+        var result = cardRepository.findById(id);
+        CardsModels card = result.get();
+
+        card.setCompletionPercentage(1);
+        cardRepository.save(card);
+    }
 }
