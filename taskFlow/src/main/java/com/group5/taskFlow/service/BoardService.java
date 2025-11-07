@@ -56,7 +56,7 @@ public class BoardService {
     public List<BoardResponse> findAll() {
         return boardRepository.findAll().stream()
                 .map(this::toBoardResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public BoardResponse findById(UUID id) {
@@ -83,7 +83,7 @@ public class BoardService {
         boardRepository.deleteById(id);
     }
 
-    private BoardResponse toBoardResponse(BoardModels boardModels) {
+    public BoardResponse toBoardResponse(BoardModels boardModels) {
         BoardResponse boardResponse = new BoardResponse();
         boardResponse.setId(boardModels.getId());
         boardResponse.setName(boardModels.getName());
