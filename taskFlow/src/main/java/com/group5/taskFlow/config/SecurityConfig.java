@@ -72,7 +72,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers("/auth/**", "/users/register", "/users/login", "/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**", "/swagger").permitAll()
+                    .requestMatchers("/auth/**", "/users/register", "/users/login", "/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**", "/swagger", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                     .anyRequest().authenticated()
             )
             .headers(headers -> headers

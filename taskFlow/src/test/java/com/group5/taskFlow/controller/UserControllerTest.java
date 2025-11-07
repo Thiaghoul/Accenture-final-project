@@ -16,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
+import com.group5.taskFlow.dto.UserUpdateRequest;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -116,13 +117,20 @@ public class UserControllerTest {
 
     @Test
     void updateUser_shouldReturnOk() throws Exception {
-        when(userService.updateUser(any(UUID.class), any(UserRequest.class))).thenReturn(userResponse);
+        UserUpdateRequest userUpdateRequest = new UserUpdateRequest();
+        userUpdateRequest.setFirstName("Updated");
+        userUpdateRequest.setLastName("Name");
+
+        userResponse.setFirstName("Updated");
+        userResponse.setLastName("Name");
+
+        when(userService.updateUser(any(UUID.class), any(UserUpdateRequest.class))).thenReturn(userResponse);
 
         mockMvc.perform(put("/users/{id}", userResponse.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userRequest)))
+                        .content(objectMapper.writeValueAsString(userUpdateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(userResponse.getEmail()));
+                .andExpect(jsonPath("$.firstName").value("Updated"));
     }
 
     @Test

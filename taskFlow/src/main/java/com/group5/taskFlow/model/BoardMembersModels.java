@@ -5,29 +5,26 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.Instant;
 
 @Entity
 @Table(name = "board_members")
 @Data
-@IdClass(BoardMemberId.class)
 public class BoardMembersModels implements Serializable {
 
-    static final long serialVersionUID = 1L;
+    @EmbeddedId
+    private BoardMemberId id;
 
-    @Id
     @ManyToOne
-    @JoinColumn(name = "board_id", nullable = false)
-    private BoardModels board;
-
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @MapsId("user")
+    @JoinColumn(name = "user_id")
     private UserModels user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MemberRoles role;
+    @ManyToOne
+    @MapsId("board")
+    @JoinColumn(name = "board_id")
+    private BoardModels board;
 
-    private Instant joinedAt = Instant.now();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private MemberRoles role;
 }
