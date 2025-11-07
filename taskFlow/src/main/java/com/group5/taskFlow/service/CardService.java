@@ -1,10 +1,6 @@
 package com.group5.taskFlow.service;
-
-import com.group5.taskFlow.dto.BoardResponse;
 import com.group5.taskFlow.dto.CardRequest;
 import com.group5.taskFlow.dto.CardResponse;
-import com.group5.taskFlow.dto.ColumnResponse;
-import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
