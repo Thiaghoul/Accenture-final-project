@@ -10,6 +10,7 @@ import com.group5.taskFlow.repository.CardRepository;
 import com.group5.taskFlow.repository.ColumnRepository;
 import com.group5.taskFlow.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class CardService {
 
     private final CardRepository cardRepository;
@@ -38,6 +40,7 @@ public class CardService {
     }
 
     public CardResponse save(CardRequest cardRequest) {
+        log.info("Attempting to save card with title: {}", cardRequest.getTitle());
         ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
                 .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
 
@@ -58,8 +61,10 @@ public class CardService {
         card.setUpdatedAt(Instant.now());
 
         CardsModels savedCard = cardRepository.save(card);
+        log.info("Card with id {} saved successfully.", savedCard.getId());
 
         if (assignee != null) {
+            log.info("Sending notification email to assignee: {}", assignee.getEmail());
             emailService.sendSimpleMessage(assignee.getEmail(), "You have been assigned a new task", "You have been assigned the task: " + savedCard.getTitle());
         }
 
@@ -67,20 +72,29 @@ public class CardService {
     }
 
     public List<CardResponse> findAll() {
+        log.info("Fetching all cards.");
         return cardRepository.findAll().stream()
                 .map(this::toCardResponse)
                 .collect(Collectors.toList());
     }
 
     public CardResponse findById(UUID id) {
+        log.info("Fetching card with id: {}", id);
         CardsModels card = cardRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Card not found with id: {}", id);
+                    return new NoSuchElementException("Card not found with ID: " + id);
+                });
         return toCardResponse(card);
     }
 
     public CardResponse update(UUID id, CardRequest cardRequest) {
+        log.info("Updating card with id: {}", id);
         CardsModels card = cardRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Card not found with id: {}", id);
+                    return new NoSuchElementException("Card not found with ID: " + id);
+                });
 
         ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
                 .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
@@ -101,8 +115,10 @@ public class CardService {
         card.setUpdatedAt(Instant.now());
 
         CardsModels updatedCard = cardRepository.save(card);
+        log.info("Card with id {} updated successfully.", id);
 
         if (assignee != null) {
+            log.info("Sending update notification email to assignee: {}", assignee.getEmail());
             emailService.sendSimpleMessage(assignee.getEmail(), "A task assigned to you has been updated", "The task: " + updatedCard.getTitle() + " has been updated.");
         }
 
@@ -110,7 +126,13 @@ public class CardService {
     }
 
     public void deleteById(UUID id) {
+        log.info("Deleting card with id: {}", id);
+        if (!cardRepository.existsById(id)) {
+            log.error("Card not found with id: {}", id);
+            throw new NoSuchElementException("Card not found with ID: " + id);
+        }
         cardRepository.deleteById(id);
+        log.info("Card with id {} deleted successfully.", id);
     }
 
     public CardResponse toCardResponse(CardsModels card) {
@@ -131,16 +153,22 @@ public class CardService {
     }
 
     public List<CardResponse> getAllCardOfBoard(UUID id) {
+        log.info("Fetching all cards for board with id: {}", id);
         return cardRepository.findByBoardId(id).stream()
                 .map(this::toCardResponse)
                 .collect(Collectors.toList());
     }
 
     public void changeStatusWithId(UUID id) {
+        log.info("Changing status for card with id: {}", id);
         var result = cardRepository.findById(id);
-        CardsModels card = result.get();
+        CardsModels card = result.orElseThrow(() -> {
+            log.error("Card not found with id: {}", id);
+            return new NoSuchElementException("Card not found with ID: " + id);
+        });
 
         card.setCompletionPercentage(1);
         cardRepository.save(card);
+        log.info("Status for card with id {} changed successfully.", id);
     }
 }

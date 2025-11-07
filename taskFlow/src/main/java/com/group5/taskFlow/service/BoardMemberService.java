@@ -10,6 +10,7 @@ import com.group5.taskFlow.model.enums.MemberRoles;
 import com.group5.taskFlow.repository.BoardMemberRepository;
 import com.group5.taskFlow.repository.BoardRepository;
 import com.group5.taskFlow.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,19 +19,23 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class BoardMemberService {
 
   private final BoardMemberRepository boardMemberRepository;
   private final UserRepository userRepository;
   private final BoardRepository boardRepository;
+  private final EmailService emailService;
 
-  public BoardMemberService(BoardMemberRepository boardMemberRepository, UserRepository userRepository, BoardRepository boardRepository) {
+  public BoardMemberService(BoardMemberRepository boardMemberRepository, UserRepository userRepository, BoardRepository boardRepository, EmailService emailService) {
     this.boardMemberRepository = boardMemberRepository;
     this.userRepository = userRepository;
     this.boardRepository = boardRepository;
+    this.emailService = emailService;
   }
 
   public List<BoardModels> findBoardsByUserId(UUID userId) {
+    log.info("Finding boards for user with id: {}", userId);
     List<BoardMembersModels> boardMembers = boardMemberRepository.findByUserId(userId);
 
     return boardMembers.stream()
@@ -39,6 +44,7 @@ public class BoardMemberService {
   }
 
   public BoardMemberResponse createBoardMember(BoardMemberRequest boardMemberRequest) {
+    log.info("Adding user {} to board {}", boardMemberRequest.getUserId(), boardMemberRequest.getBoardId());
     UserModels user = userRepository.findById(boardMemberRequest.getUserId())
             .orElseThrow(() -> new RuntimeException("User not found"));
     BoardModels board = boardRepository.findById(boardMemberRequest.getBoardId())
@@ -50,6 +56,10 @@ public class BoardMemberService {
     boardMember.setRole(MemberRoles.valueOf(boardMemberRequest.getMemberRole()));
 
     BoardMembersModels savedBoardMember = boardMemberRepository.save(boardMember);
+
+    String message = String.format("You have been invited to the board: %s", board.getName());
+    emailService.sendSimpleMessage(user.getEmail(), "You have been invited to a board", message);
+    log.info("Invitation email sent to {}", user.getEmail());
 
     BoardMemberResponse response = new BoardMemberResponse();
 //        response.setId(savedBoardMember.getId());
