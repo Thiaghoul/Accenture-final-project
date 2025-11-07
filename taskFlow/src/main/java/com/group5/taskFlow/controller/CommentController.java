@@ -6,22 +6,30 @@ import com.group5.taskFlow.service.CommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/cards/{cardId}/comments")
+@RequestMapping("/api/v1/comments")
 public class CommentController {
 
     private final CommentService commentService;
 
+    @Autowired
     public CommentController(CommentService commentService) {
         this.commentService = commentService;
     }
 
     @PostMapping
-    public ResponseEntity<CommentResponse> addComment(@PathVariable UUID cardId, @RequestBody CommentRequest commentRequest) {
-        CommentResponse newComment = commentService.addComment(cardId, commentRequest);
-        return new ResponseEntity<>(newComment, HttpStatus.CREATED);
+    public ResponseEntity<CommentResponse> createComment (@Valid @RequestBody CommentRequest commentRequest){
+        return ResponseEntity.ok(commentService.save(commentRequest));
     }
+
+    @GetMapping("/card/{cardId}")
+    public ResponseEntity<List<CommentResponse>> getCommentsByCardId (@PathVariable UUID cardId){
+        return ResponseEntity.ok(commentService.findByCardId(cardId));
+    }
+
 }

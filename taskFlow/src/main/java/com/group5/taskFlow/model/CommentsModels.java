@@ -2,6 +2,8 @@ package com.group5.taskFlow.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -27,7 +29,7 @@ public class CommentsModels implements Serializable {
     private UserModels user;
 
     @Column(nullable = false)
-    private String content;
+    private String text;
 
     private Instant createdAt = Instant.now();
 }
