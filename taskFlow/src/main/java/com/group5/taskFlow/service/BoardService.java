@@ -7,9 +7,11 @@ import com.group5.taskFlow.dto.ColumnResponse;
 import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.ColumnTypeModels;
+import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.repository.BoardRepository;
 import com.group5.taskFlow.repository.ColumnRepository;
 import com.group5.taskFlow.repository.ColumnTypeRepository;
+import com.group5.taskFlow.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,19 +27,25 @@ public class BoardService {
     private final ColumnRepository columnRepository;
     private final ColumnTypeRepository columnTypeRepository;
     private final CardService cardService;
+    private final UserRepository userRepository;
 
     @Autowired
-    public BoardService(BoardRepository boardRepository, ColumnRepository columnRepository, ColumnTypeRepository columnTypeRepository, CardService cardService) {
+    public BoardService(BoardRepository boardRepository, ColumnRepository columnRepository, ColumnTypeRepository columnTypeRepository, CardService cardService, UserRepository userRepository) {
         this.boardRepository = boardRepository;
         this.columnRepository = columnRepository;
         this.columnTypeRepository = columnTypeRepository;
         this.cardService = cardService;
+        this.userRepository = userRepository;
     }
 
-    public BoardResponse save(BoardRequest boardRequest) {
+    public BoardResponse save(BoardRequest boardRequest, String userEmail) {
+        UserModels owner = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + userEmail));
+
         BoardModels boardModels = new BoardModels();
         boardModels.setName(boardRequest.getName());
         boardModels.setDescription(boardRequest.getDescription());
+        boardModels.setOwner(owner);
 
         BoardModels savedBoard = boardRepository.save(boardModels);
 
@@ -53,8 +61,11 @@ public class BoardService {
         return toBoardResponse(savedBoard);
     }
 
-    public List<BoardResponse> findAll() {
-        return boardRepository.findAll().stream()
+    public List<BoardResponse> findAll(String userEmail) {
+        UserModels owner = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + userEmail));
+
+        return boardRepository.findByOwnerId(owner.getId()).stream()
                 .map(this::toBoardResponse)
                 .collect(Collectors.toList());
     }
@@ -63,6 +74,16 @@ public class BoardService {
         BoardModels board = boardRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Board not found with id: " + id));
         return toBoardResponse(board);
+    }
+
+    public List<CardResponse> getTasksForBoard(UUID projectId) {
+        BoardModels board = boardRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Board not found with id: " + projectId));
+
+        return board.getColumns().stream()
+                .flatMap(column -> column.getCards().stream())
+                .map(cardService::toCardResponse)
+                .collect(Collectors.toList());
     }
 
     public BoardResponse update(UUID id, BoardRequest boardRequest) {

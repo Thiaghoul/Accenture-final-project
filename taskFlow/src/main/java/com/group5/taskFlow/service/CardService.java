@@ -37,7 +37,7 @@ public class CardService {
     this.emailService = emailService;
   }
 
-  public CardResponse save(CardRequest cardRequest) {
+  public CardResponse save(UUID projectId, CardRequest cardRequest) {
     ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
             .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
 

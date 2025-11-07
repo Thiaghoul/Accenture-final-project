@@ -1,5 +1,7 @@
 package com.group5.taskFlow.service;
 
+import com.group5.taskFlow.dto.AuthResponse;
+import com.group5.taskFlow.dto.UserRegisterRequest;
 import com.group5.taskFlow.dto.UserRegisterResponse;
 import com.group5.taskFlow.dto.UserRequest;
 import com.group5.taskFlow.dto.UserResponse;
@@ -14,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,24 +37,24 @@ public class UserService {
         this.emailService = emailService;
     }
 
-    public UserResponse save(UserRequest userRequest) {
-        if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
+    public AuthResponse registerUser(UserRegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("User with this email already exists.");
         }
-        
+
         UserModels userModels = new UserModels();
-        userModels.setEmail(userRequest.getEmail());
-        userModels.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
-        userModels.setFirstName(userRequest.getFirstName());
-        userModels.setLastName(userRequest.getLastName());
-        userModels.setRoles(userRequest.getRoles().stream().map(UserRoles::name).collect(Collectors.toSet()));
+        userModels.setEmail(request.getEmail());
+        userModels.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        userModels.setFirstName(request.getFirstName());
+        userModels.setLastName(request.getLastName());
+        userModels.setRoles(Collections.singleton(UserRoles.USER.name())); // Default role
 
         UserModels savedUser = userRepository.save(userModels);
-
-        return toUserResponse(savedUser);
+        String token = jwtTokenProvider.generateToken(savedUser.getEmail());
+        return new AuthResponse(toUserResponse(savedUser), token);
     }
 
-    public UserRegisterResponse authenticateUser(String email, String password) {
+    public AuthResponse authenticateUser(String email, String password) {
         UserModels user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
 
@@ -60,7 +63,13 @@ public class UserService {
         }
 
         String token = jwtTokenProvider.generateToken(user.getEmail());
-        return new UserRegisterResponse(user.getEmail(), token);
+        return new AuthResponse(toUserResponse(user), token);
+    }
+
+    public UserResponse getCurrentUser(String email) {
+        UserModels user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        return toUserResponse(user);
     }
 
     public java.util.List<UserResponse> getAllUsers() {

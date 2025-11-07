@@ -1,7 +1,5 @@
 package com.group5.taskFlow.controller;
 
-import com.group5.taskFlow.dto.UserLoginRequest;
-import com.group5.taskFlow.dto.UserRegisterResponse;
 import com.group5.taskFlow.dto.UserRequest;
 import com.group5.taskFlow.dto.UserResponse;
 import com.group5.taskFlow.service.UserService;
@@ -13,25 +11,13 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users") // Changed to /api/users for consistency
 public class UserController {
 
     private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<UserResponse> registerUser(@RequestBody UserRequest userRequest) {
-        UserResponse newUser = userService.save(userRequest);
-        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<UserRegisterResponse> login(@RequestBody UserLoginRequest userLoginRequest) {
-        UserRegisterResponse response = userService.authenticateUser(userLoginRequest.getEmail(), userLoginRequest.getPassword());
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping

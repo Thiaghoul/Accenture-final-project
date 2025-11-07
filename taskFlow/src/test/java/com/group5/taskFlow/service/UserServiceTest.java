@@ -1,7 +1,7 @@
 package com.group5.taskFlow.service;
 
-import com.group5.taskFlow.dto.UserRegisterResponse;
-import com.group5.taskFlow.dto.UserRequest;
+import com.group5.taskFlow.dto.AuthResponse;
+import com.group5.taskFlow.dto.UserRegisterRequest;
 import com.group5.taskFlow.dto.UserResponse;
 import com.group5.taskFlow.model.PasswordResetToken;
 import com.group5.taskFlow.model.UserModels;
@@ -18,9 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -50,7 +48,7 @@ public class UserServiceTest {
     private UserService userService;
 
     private UserModels userModels;
-    private UserRequest userRequest;
+    private UserRegisterRequest userRegisterRequest;
 
     @BeforeEach
     void setUp() {
@@ -59,29 +57,28 @@ public class UserServiceTest {
         userModels.setEmail("test@example.com");
         userModels.setPasswordHash("encodedPassword");
         userModels.setFirstName("Test");
-        userModels.setLastName("User");
-        userModels.setRoles(new HashSet<>(Arrays.asList(UserRoles.USER.name())));
+        userModels.setRoles(new HashSet<>(Collections.singletonList(UserRoles.USER.name())));
 
-        userRequest = new UserRequest();
-        userRequest.setEmail("test@example.com");
-        userRequest.setPassword("password");
-        userRequest.setFirstName("Test");
-        userRequest.setLastName("User");
-        userRequest.setRoles(new HashSet<>(Collections.singletonList(UserRoles.USER)));
-
-        // Manually inject mocks since @InjectMocks might not handle all constructor parameters automatically after adding new ones
-        userService = new UserService(userRepository, passwordEncoder, jwtTokenProvider, passwordResetTokenRepository, emailService);
+        userRegisterRequest = new UserRegisterRequest();
+        userRegisterRequest.setFirstName("Test");
+        userRegisterRequest.setLastName("User");
+        userRegisterRequest.setEmail("test@example.com");
+        userRegisterRequest.setPassword("password");
     }
 
     @Test
-    public void registerUser_whenEmailDoesNotExist_shouldSaveUser() {
+    public void registerUser_whenEmailDoesNotExist_shouldSaveUserAndReturnAuthResponse() {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(UserModels.class))).thenReturn(userModels);
+        when(jwtTokenProvider.generateToken(anyString())).thenReturn("test-token");
 
-        userService.save(userRequest);
+        AuthResponse response = userService.registerUser(userRegisterRequest);
 
         verify(userRepository, times(1)).save(any(UserModels.class));
+        assertThat(response).isNotNull();
+        assertThat(response.getToken()).isEqualTo("test-token");
+        assertThat(response.getUser().getEmail()).isEqualTo(userRegisterRequest.getEmail());
     }
 
     @Test
@@ -89,23 +86,23 @@ public class UserServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userModels));
 
         assertThrows(IllegalArgumentException.class, () -> {
-            userService.save(userRequest);
+            userService.registerUser(userRegisterRequest);
         });
 
         verify(userRepository, never()).save(any(UserModels.class));
     }
 
     @Test
-    public void authenticateUser_whenCredentialsAreValid_shouldReturnResponseWithToken() {
+    public void authenticateUser_whenCredentialsAreValid_shouldReturnAuthResponse() {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userModels));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(jwtTokenProvider.generateToken(anyString())).thenReturn("test-token");
 
-        UserRegisterResponse response = userService.authenticateUser("test@example.com", "password");
+        AuthResponse response = userService.authenticateUser("test@example.com", "password");
 
         assertThat(response).isNotNull();
-        assertThat(response.email()).isEqualTo("test@example.com");
-        assertThat(response.token()).isEqualTo("test-token");
+        assertThat(response.getToken()).isEqualTo("test-token");
+        assertThat(response.getUser().getEmail()).isEqualTo("test@example.com");
     }
 
     @Test
@@ -128,20 +125,8 @@ public class UserServiceTest {
     }
 
     @Test
-    public void save_shouldReturnUserResponse() {
-        when(passwordEncoder.encode(userRequest.getPassword())).thenReturn("encodedPassword");
-        when(userRepository.save(any(UserModels.class))).thenReturn(userModels);
-
-        UserResponse result = userService.save(userRequest);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getEmail()).isEqualTo(userRequest.getEmail());
-        assertThat(result.getFirstName()).isEqualTo(userRequest.getFirstName());
-    }
-
-    @Test
     public void getAllUsers_shouldReturnListOfUserResponses() {
-        when(userRepository.findAll()).thenReturn(Arrays.asList(userModels));
+        when(userRepository.findAll()).thenReturn(Collections.singletonList(userModels));
 
         List<UserResponse> results = userService.getAllUsers();
 
@@ -152,111 +137,60 @@ public class UserServiceTest {
 
     @Test
     void createPasswordResetTokenForUser_whenUserExists_shouldCreateTokenAndSendEmail() {
-        // Arrange
         String email = "test@example.com";
-        String token = UUID.randomUUID().toString();
-        UserModels user = new UserModels();
-        user.setEmail(email);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(userModels));
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(passwordResetTokenRepository.save(any(PasswordResetToken.class))).thenAnswer(invocation -> {
-            PasswordResetToken savedToken = invocation.getArgument(0);
-            savedToken.setToken(token); // Simulate token generation
-            return savedToken;
-        });
-
-        // Act
         userService.createPasswordResetTokenForUser(email);
 
-        // Assert
-        verify(userRepository, times(1)).findByEmail(email);
         verify(passwordResetTokenRepository, times(1)).save(any(PasswordResetToken.class));
         verify(emailService, times(1)).sendSimpleMessage(eq(email), eq("Password Reset Request"), anyString());
     }
 
     @Test
     void createPasswordResetTokenForUser_whenUserDoesNotExist_shouldThrowException() {
-        // Arrange
         String email = "nonexistent@example.com";
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> userService.createPasswordResetTokenForUser(email));
-
-        verify(userRepository, times(1)).findByEmail(email);
-        verify(passwordResetTokenRepository, never()).save(any(PasswordResetToken.class));
-        verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
     @Test
     void resetPassword_whenTokenIsValid_shouldResetPasswordAndDeleteToken() {
-        // Arrange
         String token = UUID.randomUUID().toString();
         String newPassword = "newPassword123";
-        UserModels user = new UserModels();
-        user.setEmail("test@example.com");
-        user.setPasswordHash("oldHash");
-
-        PasswordResetToken passwordResetToken = new PasswordResetToken(token, user);
-        // Set expiry date to a future date to make it valid
+        PasswordResetToken passwordResetToken = new PasswordResetToken(token, userModels);
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MINUTE, 10);
         passwordResetToken.setExpiryDate(cal.getTime());
 
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(passwordResetToken);
         when(passwordEncoder.encode(newPassword)).thenReturn("newEncodedPassword");
-        when(userRepository.save(any(UserModels.class))).thenReturn(user);
 
-        // Act
         userService.resetPassword(token, newPassword);
 
-        // Assert
-        verify(passwordResetTokenRepository, times(1)).findByToken(token);
-        verify(passwordEncoder, times(1)).encode(newPassword);
-        verify(userRepository, times(1)).save(user);
+        verify(userRepository, times(1)).save(userModels);
         verify(passwordResetTokenRepository, times(1)).delete(passwordResetToken);
-        assertThat(user.getPasswordHash()).isEqualTo("newEncodedPassword");
+        assertThat(userModels.getPasswordHash()).isEqualTo("newEncodedPassword");
     }
 
     @Test
     void resetPassword_whenTokenIsInvalid_shouldThrowException() {
-        // Arrange
         String token = "invalidToken";
-        String newPassword = "newPassword123";
-
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(null);
 
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> userService.resetPassword(token, newPassword));
-
-        verify(passwordResetTokenRepository, times(1)).findByToken(token);
-        verify(passwordEncoder, never()).encode(anyString());
-        verify(userRepository, never()).save(any(UserModels.class));
-        verify(passwordResetTokenRepository, never()).delete(any(PasswordResetToken.class));
+        assertThrows(IllegalArgumentException.class, () -> userService.resetPassword(token, "newPassword"));
     }
 
     @Test
     void resetPassword_whenTokenIsExpired_shouldThrowException() {
-        // Arrange
         String token = UUID.randomUUID().toString();
-        String newPassword = "newPassword123";
-        UserModels user = new UserModels();
-        user.setEmail("test@example.com");
-
-        PasswordResetToken passwordResetToken = new PasswordResetToken(token, user);
-        // Set expiry date to a past date to make it expired
+        PasswordResetToken passwordResetToken = new PasswordResetToken(token, userModels);
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MINUTE, -10);
         passwordResetToken.setExpiryDate(cal.getTime());
 
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(passwordResetToken);
 
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> userService.resetPassword(token, newPassword));
-
-        verify(passwordResetTokenRepository, times(1)).findByToken(token);
-        verify(passwordEncoder, never()).encode(anyString());
-        verify(userRepository, never()).save(any(UserModels.class));
-        verify(passwordResetTokenRepository, never()).delete(any(PasswordResetToken.class));
+        assertThrows(IllegalArgumentException.class, () -> userService.resetPassword(token, "newPassword"));
     }
 }

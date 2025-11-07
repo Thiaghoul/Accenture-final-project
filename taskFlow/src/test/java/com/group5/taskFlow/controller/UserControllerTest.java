@@ -1,8 +1,6 @@
 package com.group5.taskFlow.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.group5.taskFlow.dto.UserLoginRequest;
-import com.group5.taskFlow.dto.UserRegisterResponse;
 import com.group5.taskFlow.dto.UserRequest;
 import com.group5.taskFlow.dto.UserResponse;
 import com.group5.taskFlow.security.JwtTokenProvider;
@@ -47,8 +45,6 @@ public class UserControllerTest {
 
     private UserRequest userRequest;
     private UserResponse userResponse;
-    private UserLoginRequest userLoginRequest;
-    private UserRegisterResponse userRegisterResponse;
 
     @BeforeEach
     void setUp() {
@@ -64,35 +60,6 @@ public class UserControllerTest {
         userResponse.setEmail("test@example.com");
         userResponse.setFirstName("Test");
         userResponse.setLastName("User");
-
-        userLoginRequest = new UserLoginRequest();
-        userLoginRequest.setEmail("test@example.com");
-        userLoginRequest.setPassword("password");
-
-        userRegisterResponse = new UserRegisterResponse("test@example.com", "token");
-    }
-
-    @Test
-    void registerUser_shouldReturnCreated() throws Exception {
-        when(userService.save(any(UserRequest.class))).thenReturn(userResponse);
-
-        mockMvc.perform(post("/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userRequest)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value(userResponse.getEmail()));
-    }
-
-    @Test
-    void login_shouldReturnOk() throws Exception {
-        when(userService.authenticateUser(userLoginRequest.getEmail(), userLoginRequest.getPassword())).thenReturn(userRegisterResponse);
-
-        mockMvc.perform(post("/users/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userLoginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(userRegisterResponse.email()))
-                .andExpect(jsonPath("$.token").value(userRegisterResponse.token()));
     }
 
     @Test
@@ -100,7 +67,7 @@ public class UserControllerTest {
         List<UserResponse> users = Collections.singletonList(userResponse);
         when(userService.getAllUsers()).thenReturn(users);
 
-        mockMvc.perform(get("/users"))
+        mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].email").value(userResponse.getEmail()));
     }
@@ -109,7 +76,7 @@ public class UserControllerTest {
     void getUserById_shouldReturnOk() throws Exception {
         when(userService.getUserById(any(UUID.class))).thenReturn(userResponse);
 
-        mockMvc.perform(get("/users/{id}", userResponse.getId()))
+        mockMvc.perform(get("/api/users/{id}", userResponse.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(userResponse.getEmail()));
     }
@@ -118,7 +85,7 @@ public class UserControllerTest {
     void updateUser_shouldReturnOk() throws Exception {
         when(userService.updateUser(any(UUID.class), any(UserRequest.class))).thenReturn(userResponse);
 
-        mockMvc.perform(put("/users/{id}", userResponse.getId())
+        mockMvc.perform(put("/api/users/{id}", userResponse.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isOk())
@@ -127,7 +94,7 @@ public class UserControllerTest {
 
     @Test
     void deleteUser_shouldReturnNoContent() throws Exception {
-        mockMvc.perform(delete("/users/{id}", UUID.randomUUID()))
+        mockMvc.perform(delete("/api/users/{id}", UUID.randomUUID()))
                 .andExpect(status().isNoContent());
     }
 }

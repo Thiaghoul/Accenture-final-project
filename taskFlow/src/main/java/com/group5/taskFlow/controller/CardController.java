@@ -22,11 +22,6 @@ public class CardController {
     this.cardService = cardService;
   }
 
-  @PostMapping
-  public ResponseEntity<CardResponse> createCard(@RequestBody CardRequest cardRequest) {
-    CardResponse newCard = cardService.save(cardRequest);
-    return new ResponseEntity<>(newCard, HttpStatus.CREATED);
-  }
 
   @GetMapping
   public ResponseEntity<List<CardResponse>> getAllCards() {
