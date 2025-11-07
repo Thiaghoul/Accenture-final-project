@@ -10,6 +10,8 @@ import jakarta.persistence.EntityNotFoundException;
 import com.group5.taskFlow.security.JwtTokenProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.BadCredentialsException;
+import com.group5.taskFlow.exception.EmailAlreadyExistsException;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,7 +31,7 @@ public class UserService {
 
     public UserResponse save(UserRequest userRequest) {
         if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("User with this email already exists.");
+            throw new EmailAlreadyExistsException("User with this email already exists.");
         }
         
         UserModels userModels = new UserModels();
@@ -46,10 +48,10 @@ public class UserService {
 
     public UserRegisterResponse authenticateUser(String email, String password) {
         UserModels user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password."));
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password.");
+            throw new BadCredentialsException("Invalid email or password.");
         }
 
         String token = jwtTokenProvider.generateToken(user.getEmail());

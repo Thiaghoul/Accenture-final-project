@@ -3,6 +3,7 @@ package com.group5.taskFlow.service;
 import com.group5.taskFlow.dto.UserRegisterResponse;
 import com.group5.taskFlow.dto.UserRequest;
 import com.group5.taskFlow.dto.UserResponse;
+import com.group5.taskFlow.exception.EmailAlreadyExistsException;
 import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.model.enums.UserRoles;
 import com.group5.taskFlow.repository.UserRepository;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
@@ -75,7 +77,7 @@ public class UserServiceTest {
     public void registerUser_whenEmailExists_shouldThrowException() {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userModels));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(EmailAlreadyExistsException.class, () -> {
             userService.save(userRequest);
         });
 
@@ -99,7 +101,7 @@ public class UserServiceTest {
     public void authenticateUser_whenEmailNotFound_shouldThrowException() {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(BadCredentialsException.class, () -> {
             userService.authenticateUser("wrong@example.com", "password");
         });
     }
@@ -109,7 +111,7 @@ public class UserServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userModels));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(BadCredentialsException.class, () -> {
             userService.authenticateUser("test@example.com", "wrongpassword");
         });
     }
