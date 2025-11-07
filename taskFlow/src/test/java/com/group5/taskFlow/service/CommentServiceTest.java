@@ -76,11 +76,11 @@ public class CommentServiceTest {
         commentRequest = new CommentRequest();
         commentRequest.setCardId(cardId);
         commentRequest.setUserId(userId);
-        commentRequest.setText("This is a test comment.");
+        commentRequest.setContent("This is a test comment.");
 
         comment = new CommentsModels();
         comment.setId(UUID.randomUUID());
-        comment.setText(commentRequest.getText());
+        comment.setContent(commentRequest.getContent());
         comment.setCard(card);
         comment.setUser(user);
         comment.setCreatedAt(Instant.now());
@@ -98,7 +98,7 @@ public class CommentServiceTest {
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getContent()).isEqualTo(commentRequest.getText());
+        assertThat(result.getContent()).isEqualTo(commentRequest.getContent());
         verify(emailService, times(1)).sendSimpleMessage(eq(assignee.getEmail()), anyString(), anyString());
     }
 
@@ -152,7 +152,7 @@ public class CommentServiceTest {
         // Assert
         assertThat(results).isNotNull();
         assertThat(results).hasSize(1);
-        assertThat(results.get(0).getContent()).isEqualTo(comment.getText());
+        assertThat(results.get(0).getContent()).isEqualTo(comment.getContent());
         verify(commentRepository, times(1)).findByCardId(cardId);
     }
 }

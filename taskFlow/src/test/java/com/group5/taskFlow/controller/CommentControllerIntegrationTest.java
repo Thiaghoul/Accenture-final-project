@@ -106,7 +106,7 @@ public class CommentControllerIntegrationTest {
         CommentRequest request = new CommentRequest();
         request.setCardId(cardId);
         request.setUserId(userId);
-        request.setText("New comment text");
+        request.setContent("New comment text");
 
         when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -131,7 +131,7 @@ public class CommentControllerIntegrationTest {
         CommentRequest request = new CommentRequest();
         request.setCardId(cardId);
         request.setUserId(userId);
-        request.setText("New comment text");
+        request.setContent("New comment text");
 
         when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -154,7 +154,7 @@ public class CommentControllerIntegrationTest {
         CommentRequest request = new CommentRequest();
         request.setCardId(cardId);
         request.setUserId(userId);
-        request.setText("New comment text");
+        request.setContent("New comment text");
 
         when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -172,7 +172,7 @@ public class CommentControllerIntegrationTest {
         CommentRequest request = new CommentRequest();
         request.setCardId(cardId);
         request.setUserId(userId);
-        request.setText("New comment text");
+        request.setContent("New comment text");
 
         when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
@@ -198,7 +198,7 @@ public class CommentControllerIntegrationTest {
                         .header("Authorization", "Bearer " + validJwtToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].content").value(comment.getText()));
+                .andExpect(jsonPath("$[0].content").value(comment.getContent()));
 
         verify(commentRepository, times(1)).findByCardId(cardId);
     }
