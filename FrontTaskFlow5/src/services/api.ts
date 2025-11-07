@@ -1,4 +1,5 @@
 import axios from "axios"
+import { getUserId } from "@/lib/storage"
 
 // Base API URL - configure this in your .env file
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333/api"
@@ -16,9 +17,14 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("auth_token")
+    const userId = getUserId()
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+
+    if (userId && config.headers) {
+      config.headers["X-User-Id"] = userId
     }
 
     console.log("[v0] API Request:", config.method?.toUpperCase(), config.url)

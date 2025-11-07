@@ -11,6 +11,7 @@ public class BoardResponse {
     private UUID id;
     private String name;
     private String description;
+    private UUID ownerId;
     private Instant createdAt;
     private Instant updatedAt;
     private List<ColumnResponse> columns;

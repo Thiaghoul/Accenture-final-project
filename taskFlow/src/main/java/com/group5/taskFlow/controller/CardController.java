@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/cards")
+@RequestMapping("/api/v1/cards")
 public class CardController {
 
   private final CardService cardService;
@@ -22,40 +22,45 @@ public class CardController {
     this.cardService = cardService;
   }
 
+  @PostMapping
+  public ResponseEntity<CardResponse> createCard(@PathVariable UUID projectId, @RequestBody CardRequest cardRequest) {
+    CardResponse createdCard = cardService.save(projectId, cardRequest);
+    return new ResponseEntity<>(createdCard, HttpStatus.CREATED);
+  }
 
   @GetMapping
-  public ResponseEntity<List<CardResponse>> getAllCards() {
-    List<CardResponse> cards = cardService.findAll();
+  public ResponseEntity<List<CardResponse>> getAllCardsForProject(@PathVariable UUID projectId) {
+    List<CardResponse> cards = cardService.findAllByProjectId(projectId);
     return new ResponseEntity<>(cards, HttpStatus.OK);
   }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<CardResponse> getCardById(@PathVariable UUID id) {
-    CardResponse card = cardService.findById(id);
+  @GetMapping("/{taskId}")
+  public ResponseEntity<CardResponse> getCardById(@PathVariable UUID projectId, @PathVariable UUID taskId) {
+    CardResponse card = cardService.findById(taskId);
     return new ResponseEntity<>(card, HttpStatus.OK);
   }
 
-  @GetMapping("/board/{id}")
-  public ResponseEntity<List<CardResponse>> getAllCardsOfBoard(@PathVariable UUID id) {
-    var result = cardService.getAllCardOfBoard(id);
-    return  new ResponseEntity<>(result, HttpStatus.OK);
-  }
-
-  @PutMapping("/{id}")
-  public ResponseEntity<CardResponse> updateCard(@PathVariable UUID id, @RequestBody CardRequest cardRequest) {
-    CardResponse updatedCard = cardService.update(id, cardRequest);
+  @PutMapping("/{taskId}")
+  public ResponseEntity<CardResponse> updateCard(@PathVariable UUID projectId, @PathVariable UUID taskId, @RequestBody CardRequest cardRequest) {
+    CardResponse updatedCard = cardService.update(taskId, cardRequest);
     return new ResponseEntity<>(updatedCard, HttpStatus.OK);
   }
 
-  @PutMapping("/{id}/complete")
-  public ResponseEntity<CardResponse> completeCard(@PathVariable UUID id) {
-    cardService.changeStatusWithId(id);
+  @PutMapping("/{taskId}/status/{newStatusId}")
+  public ResponseEntity<CardResponse> changeCardStatus(@PathVariable UUID projectId, @PathVariable UUID taskId, @PathVariable UUID newStatusId) {
+    cardService.changeStatusWithId(taskId, newStatusId);
     return new ResponseEntity<>(HttpStatus.ACCEPTED);
   }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteCard(@PathVariable UUID id) {
-    cardService.deleteById(id);
+  @DeleteMapping("/{taskId}")
+  public ResponseEntity<Void> deleteCard(@PathVariable UUID projectId, @PathVariable UUID taskId) {
+    cardService.deleteById(taskId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+  
+  @PostMapping("/{taskId}/assign-me")
+  public ResponseEntity<CardResponse> assignMeToCard(@PathVariable UUID taskId, @RequestHeader("X-User-Id") UUID userId) {
+    CardResponse updatedCard = cardService.assignMeToCard(taskId, userId);
+    return new ResponseEntity<>(updatedCard, HttpStatus.OK);
   }
 }

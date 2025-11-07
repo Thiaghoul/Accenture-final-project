@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -42,11 +43,14 @@ public class CardControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private UUID projectId;
     private CardRequest cardRequest;
     private CardResponse cardResponse;
 
     @BeforeEach
     void setUp() {
+        projectId = UUID.randomUUID();
+
         cardRequest = new CardRequest();
         cardRequest.setTitle("Test Card");
         cardRequest.setDescription("Test Description");
@@ -59,9 +63,9 @@ public class CardControllerTest {
 
     @Test
     void createCard_shouldReturnCreated() throws Exception {
-        when(cardService.save(any(CardRequest.class))).thenReturn(cardResponse);
+        when(cardService.save(eq(projectId), any(CardRequest.class))).thenReturn(cardResponse);
 
-        mockMvc.perform(post("/cards")
+        mockMvc.perform(post("/api/v1/cards", projectId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cardRequest)))
                 .andExpect(status().isCreated())
@@ -69,11 +73,11 @@ public class CardControllerTest {
     }
 
     @Test
-    void getAllCards_shouldReturnOk() throws Exception {
+    void getAllCardsForProject_shouldReturnOk() throws Exception {
         List<CardResponse> cards = Collections.singletonList(cardResponse);
-        when(cardService.findAll()).thenReturn(cards);
+        when(cardService.findAllByProjectId(eq(projectId))).thenReturn(cards);
 
-        mockMvc.perform(get("/cards"))
+        mockMvc.perform(get("/api/v1/cards", projectId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value(cardResponse.getTitle()));
     }
@@ -82,7 +86,7 @@ public class CardControllerTest {
     void getCardById_shouldReturnOk() throws Exception {
         when(cardService.findById(any(UUID.class))).thenReturn(cardResponse);
 
-        mockMvc.perform(get("/cards/{id}", cardResponse.getId()))
+        mockMvc.perform(get("/api/v1/cards/{taskId}", projectId, cardResponse.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(cardResponse.getTitle()));
     }
@@ -91,7 +95,7 @@ public class CardControllerTest {
     void updateCard_shouldReturnOk() throws Exception {
         when(cardService.update(any(UUID.class), any(CardRequest.class))).thenReturn(cardResponse);
 
-        mockMvc.perform(put("/cards/{id}", cardResponse.getId())
+        mockMvc.perform(put("/api/v1/cards/{taskId}", projectId, cardResponse.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cardRequest)))
                 .andExpect(status().isOk())
@@ -100,7 +104,19 @@ public class CardControllerTest {
 
     @Test
     void deleteCard_shouldReturnNoContent() throws Exception {
-        mockMvc.perform(delete("/cards/{id}", UUID.randomUUID()))
+        mockMvc.perform(delete("/api/v1/cards/{taskId}", projectId, UUID.randomUUID()))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void assignMeToCard_shouldReturnOk() throws Exception {
+        UUID cardId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(cardService.assignMeToCard(cardId, userId)).thenReturn(cardResponse);
+
+        mockMvc.perform(post("/api/v1/cards/{taskId}/assign-me", cardId)
+                        .header("X-User-Id", userId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(cardResponse.getTitle()));
     }
 }

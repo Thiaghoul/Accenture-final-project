@@ -2,6 +2,7 @@ package com.group5.taskFlow.service;
 
 import com.group5.taskFlow.dto.CardRequest;
 import com.group5.taskFlow.dto.CardResponse;
+import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
@@ -12,6 +13,7 @@ import com.group5.taskFlow.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -37,9 +39,17 @@ public class CardService {
     this.emailService = emailService;
   }
 
+  @Transactional
   public CardResponse save(UUID projectId, CardRequest cardRequest) {
+    BoardModels board = boardRepository.findById(projectId)
+            .orElseThrow(() -> new EntityNotFoundException("Board not found with id: " + projectId));
+
     ColumnsModels column = columnRepository.findById(cardRequest.getColumnId())
             .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + cardRequest.getColumnId()));
+
+    if (!column.getBoard().getId().equals(projectId)) {
+      throw new IllegalArgumentException("Column does not belong to the specified project.");
+    }
 
     UserModels assignee = null;
     if (cardRequest.getAssigneeId() != null) {
@@ -66,8 +76,12 @@ public class CardService {
     return toCardResponse(savedCard);
   }
 
-  public List<CardResponse> findAll() {
-    return cardRepository.findAll().stream()
+  public List<CardResponse> findAllByProjectId(UUID projectId) {
+    BoardModels board = boardRepository.findById(projectId)
+            .orElseThrow(() -> new EntityNotFoundException("Board not found with id: " + projectId));
+
+    return board.getColumns().stream()
+            .flatMap(column -> column.getCards().stream())
             .map(this::toCardResponse)
             .collect(Collectors.toList());
   }
@@ -78,6 +92,7 @@ public class CardService {
     return toCardResponse(card);
   }
 
+  @Transactional
   public CardResponse update(UUID id, CardRequest cardRequest) {
     CardsModels card = cardRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
@@ -109,6 +124,7 @@ public class CardService {
     return toCardResponse(updatedCard);
   }
 
+  @Transactional
   public void deleteById(UUID id) {
     cardRepository.deleteById(id);
   }
@@ -130,17 +146,60 @@ public class CardService {
     return cardResponse;
   }
 
-  public List<CardResponse> getAllCardOfBoard(UUID id) {
-    return cardRepository.findByBoardId(id).stream()
-            .map(this::toCardResponse)
-            .collect(Collectors.toList());
-  }
+  @Transactional
+  public void changeStatusWithId(UUID taskId, UUID newColumnId) {
+    CardsModels card = cardRepository.findById(taskId)
+            .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + taskId));
 
-  public void changeStatusWithId(UUID id) {
-    var result = cardRepository.findById(id);
-    CardsModels card = result.get();
+    ColumnsModels newColumn = columnRepository.findById(newColumnId)
+            .orElseThrow(() -> new EntityNotFoundException("Column not found with id: " + newColumnId));
 
-    card.setCompletionPercentage(1);
-    cardRepository.save(card);
-  }
-}
+        card.setColumn(newColumn);
+
+        card.setUpdatedAt(Instant.now());
+
+        cardRepository.save(card);
+
+      }
+
+    
+
+      @Transactional
+
+      public CardResponse assignMeToCard(UUID cardId, UUID userId) {
+
+        CardsModels card = cardRepository.findById(cardId)
+
+                .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + cardId));
+
+    
+
+        UserModels user = userRepository.findById(userId)
+
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+    
+
+        if (!card.getColumn().getBoard().getOwner().getId().equals(userId)) {
+
+          throw new IllegalArgumentException("Only the board owner can assign themselves to a card.");
+
+        }
+
+    
+
+        card.setAssignee(user);
+
+        card.setUpdatedAt(Instant.now());
+
+        CardsModels updatedCard = cardRepository.save(card);
+
+    
+
+        return toCardResponse(updatedCard);
+
+      }
+
+    }
+
+    

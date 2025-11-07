@@ -5,6 +5,7 @@ import com.group5.taskFlow.dto.BoardRequest;
 import com.group5.taskFlow.dto.BoardResponse;
 import com.group5.taskFlow.security.JwtTokenProvider;
 import com.group5.taskFlow.service.BoardService;
+import com.group5.taskFlow.service.CardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +16,13 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -34,6 +37,9 @@ public class BoardControllerTest {
     private BoardService boardService;
 
     @MockBean
+    private CardService cardService;
+
+    @MockBean
     private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
@@ -44,6 +50,7 @@ public class BoardControllerTest {
 
     private BoardRequest boardRequest;
     private BoardResponse boardResponse;
+    private Principal mockPrincipal;
 
     @BeforeEach
     void setUp() {
@@ -53,13 +60,16 @@ public class BoardControllerTest {
         boardResponse = new BoardResponse();
         boardResponse.setId(UUID.randomUUID());
         boardResponse.setName("Test Board");
+
+        mockPrincipal = () -> "test@example.com";
     }
 
     @Test
     void createBoard_shouldReturnCreated() throws Exception {
-        when(boardService.save(any(BoardRequest.class))).thenReturn(boardResponse);
+        when(boardService.save(any(BoardRequest.class), eq(mockPrincipal.getName()))).thenReturn(boardResponse);
 
-        mockMvc.perform(post("/boards")
+        mockMvc.perform(post("/api/projects")
+                        .principal(mockPrincipal)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardRequest)))
                 .andExpect(status().isCreated())
@@ -69,9 +79,10 @@ public class BoardControllerTest {
     @Test
     void getAllBoards_shouldReturnOk() throws Exception {
         List<BoardResponse> boards = Collections.singletonList(boardResponse);
-        when(boardService.findAll()).thenReturn(boards);
+        when(boardService.findAll(eq(mockPrincipal.getName()))).thenReturn(boards);
 
-        mockMvc.perform(get("/boards"))
+        mockMvc.perform(get("/api/projects")
+                        .principal(mockPrincipal))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(boardResponse.getName()));
     }
@@ -80,7 +91,7 @@ public class BoardControllerTest {
     void getBoardById_shouldReturnOk() throws Exception {
         when(boardService.findById(any(UUID.class))).thenReturn(boardResponse);
 
-        mockMvc.perform(get("/boards/{id}", boardResponse.getId()))
+        mockMvc.perform(get("/api/projects/{id}", boardResponse.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(boardResponse.getName()));
     }
@@ -89,7 +100,7 @@ public class BoardControllerTest {
     void updateBoard_shouldReturnOk() throws Exception {
         when(boardService.update(any(UUID.class), any(BoardRequest.class))).thenReturn(boardResponse);
 
-        mockMvc.perform(put("/boards/{id}", boardResponse.getId())
+        mockMvc.perform(put("/api/projects/{id}", boardResponse.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardRequest)))
                 .andExpect(status().isOk())
@@ -98,7 +109,7 @@ public class BoardControllerTest {
 
     @Test
     void deleteBoard_shouldReturnNoContent() throws Exception {
-        mockMvc.perform(delete("/boards/{id}", UUID.randomUUID()))
+        mockMvc.perform(delete("/api/projects/{id}", UUID.randomUUID()))
                 .andExpect(status().isNoContent());
     }
 }

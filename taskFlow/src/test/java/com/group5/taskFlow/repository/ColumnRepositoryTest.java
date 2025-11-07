@@ -3,6 +3,7 @@ package com.group5.taskFlow.repository;
 import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.ColumnTypeModels;
 import com.group5.taskFlow.model.ColumnsModels;
+import com.group5.taskFlow.model.UserModels;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,19 +27,30 @@ public class ColumnRepositoryTest {
 
     private BoardModels board;
     private ColumnTypeModels columnType;
+    private UserModels boardOwner;
 
     @BeforeEach
     void setUp() {
+        boardOwner = new UserModels();
+        boardOwner.setEmail("boardowner@example.com");
+        boardOwner.setPasswordHash("password");
+        boardOwner.setFirstName("Board");
+        boardOwner.setLastName("Owner");
+        entityManager.persist(boardOwner);
+
         board = new BoardModels();
         board.setName("Test Board");
         board.setCreatedAt(Instant.now());
         board.setUpdatedAt(Instant.now());
+        board.setOwner(boardOwner);
         entityManager.persist(board);
 
         columnType = new ColumnTypeModels();
         columnType.setName("To Do");
         columnType.setOrder(1);
         entityManager.persist(columnType);
+
+        entityManager.flush();
     }
 
     @Test
@@ -91,6 +103,7 @@ public class ColumnRepositoryTest {
         anotherBoard.setName("Another Board");
         anotherBoard.setCreatedAt(Instant.now());
         anotherBoard.setUpdatedAt(Instant.now());
+        anotherBoard.setOwner(boardOwner);
         entityManager.persistAndFlush(anotherBoard);
 
         // when

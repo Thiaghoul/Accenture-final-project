@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -8,8 +6,10 @@ import { Label } from "@/components/ui/label"
 import type { Task } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { taskService } from "@/services/task.service"
 
 interface TaskDetailDialogProps {
+  projectId: string
   task: Task | null
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -30,7 +30,7 @@ const statusConfig = {
   done: { label: "Concluído", color: "#7ED321" },
 }
 
-export function TaskDetailDialog({ task, open, onOpenChange, onTaskUpdate }: TaskDetailDialogProps) {
+export function TaskDetailDialog({ projectId, task, open, onOpenChange, onTaskUpdate }: TaskDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedTask, setEditedTask] = useState<Task | null>(task)
   const [newComment, setNewComment] = useState("")
@@ -44,30 +44,52 @@ export function TaskDetailDialog({ task, open, onOpenChange, onTaskUpdate }: Tas
 
   if (!task || !editedTask) return null
 
-  const handleSave = () => {
-    onTaskUpdate(editedTask)
-    setIsEditing(false)
-    toast.success("Tarefa atualizada com sucesso!")
+  const handleSave = async () => {
+    if (!editedTask.id) return
+    try {
+      const updatedTask = await taskService.updateTask(projectId, editedTask.id, {
+        title: editedTask.title,
+        description: editedTask.description,
+        status: editedTask.status,
+        priority: editedTask.priority,
+        assigneeId: editedTask.assignee,
+        dueDate: editedTask.dueDate,
+      })
+      onTaskUpdate(updatedTask)
+      setIsEditing(false)
+      toast.success("Tarefa atualizada com sucesso!")
+    } catch (error) {
+      console.error("Failed to update task:", error)
+      toast.error("Falha ao atualizar a tarefa.")
+    }
   }
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !editedTask.id) return
 
-    const comment = {
-      id: Date.now().toString(),
-      author: "Você",
-      content: newComment,
-      timestamp: new Date().toISOString(),
+    try {
+      const updatedTaskWithComment = await taskService.addComment(projectId, editedTask.id, { content: newComment })
+      setEditedTask(updatedTaskWithComment)
+      onTaskUpdate(updatedTaskWithComment)
+      setNewComment("")
+      toast.success("Comentário adicionado!")
+    } catch (error) {
+      console.error("Failed to add comment:", error)
+      toast.error("Falha ao adicionar comentário.")
     }
+  }
 
-    const updatedTask = {
-      ...editedTask,
-      comments: [...(editedTask.comments || []), comment],
+  const handleAssignMe = async () => {
+    if (!editedTask.id) return
+    try {
+      const updatedTask = await taskService.assignMeToTask(editedTask.id)
+      onTaskUpdate(updatedTask)
+      setEditedTask(updatedTask)
+      toast.success("Você foi atribuído à tarefa!")
+    } catch (error) {
+      console.error("Failed to assign task:", error)
+      toast.error("Falha ao se atribuir à tarefa.")
     }
-    setEditedTask(updatedTask)
-    onTaskUpdate(updatedTask)
-    setNewComment("")
-    toast.success("Comentário adicionado!")
   }
 
   return (
@@ -291,7 +313,12 @@ export function TaskDetailDialog({ task, open, onOpenChange, onTaskUpdate }: Tas
                   <span className="text-sm">{editedTask.assignee}</span>
                 </div>
               ) : (
-                <span className="text-sm text-neutral-500">Não atribuído</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-neutral-500">Não atribuído</span>
+                  <Button size="sm" variant="outline" onClick={handleAssignMe}>
+                    Atribuir a mim
+                  </Button>
+                </div>
               )}
             </div>
 

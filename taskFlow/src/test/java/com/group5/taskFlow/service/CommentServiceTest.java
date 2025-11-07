@@ -45,7 +45,7 @@ public class CommentServiceTest {
     @InjectMocks
     private CommentService commentService;
 
-    private UUID cardId;
+    private UUID taskId;
     private UUID userId;
     private UUID assigneeId;
     private CardsModels card;
@@ -56,7 +56,7 @@ public class CommentServiceTest {
 
     @BeforeEach
     void setUp() {
-        cardId = UUID.randomUUID();
+        taskId = UUID.randomUUID();
         userId = UUID.randomUUID();
         assigneeId = UUID.randomUUID();
 
@@ -69,12 +69,11 @@ public class CommentServiceTest {
         assignee.setEmail("assignee@example.com");
 
         card = new CardsModels();
-        card.setId(cardId);
+        card.setId(taskId);
         card.setTitle("Test Task");
         card.setAssignee(assignee);
 
         commentRequest = new CommentRequest();
-        commentRequest.setCardId(cardId);
         commentRequest.setUserId(userId);
         commentRequest.setText("This is a test comment.");
 
@@ -89,12 +88,12 @@ public class CommentServiceTest {
     @Test
     void save_whenCommentIsCreatedAndAssigneeIsNotCommenter_shouldSendEmail() {
         // Arrange
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.findById(taskId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(commentRepository.save(any(CommentsModels.class))).thenReturn(comment);
 
         // Act
-        CommentResponse result = commentService.save(commentRequest);
+        CommentResponse result = commentService.save(taskId, commentRequest);
 
         // Assert
         assertThat(result).isNotNull();
@@ -106,12 +105,12 @@ public class CommentServiceTest {
     void save_whenCommentIsCreatedAndAssigneeIsCommenter_shouldNotSendEmail() {
         // Arrange
         card.setAssignee(user); // Assignee is the same as the commenter
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.findById(taskId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(commentRepository.save(any(CommentsModels.class))).thenReturn(comment);
 
         // Act
-        CommentResponse result = commentService.save(commentRequest);
+        CommentResponse result = commentService.save(taskId, commentRequest);
 
         // Assert
         assertThat(result).isNotNull();
@@ -121,10 +120,10 @@ public class CommentServiceTest {
     @Test
     void save_whenCardNotFound_shouldThrowException() {
         // Arrange
-        when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
+        when(cardRepository.findById(taskId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> commentService.save(commentRequest));
+        assertThrows(EntityNotFoundException.class, () -> commentService.save(taskId, commentRequest));
         verify(commentRepository, never()).save(any(CommentsModels.class));
         verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
@@ -132,27 +131,27 @@ public class CommentServiceTest {
     @Test
     void save_whenUserNotFound_shouldThrowException() {
         // Arrange
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.findById(taskId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> commentService.save(commentRequest));
+        assertThrows(EntityNotFoundException.class, () -> commentService.save(taskId, commentRequest));
         verify(commentRepository, never()).save(any(CommentsModels.class));
         verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
     @Test
-    void findByCardId_shouldReturnListOfCommentResponses() {
+    void findByTaskId_shouldReturnListOfCommentResponses() {
         // Arrange
-        when(commentRepository.findByCardId(cardId)).thenReturn(List.of(comment));
+        when(commentRepository.findByCardId(taskId)).thenReturn(List.of(comment));
 
         // Act
-        List<CommentResponse> results = commentService.findByCardId(cardId);
+        List<CommentResponse> results = commentService.findByTaskId(taskId);
 
         // Assert
         assertThat(results).isNotNull();
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getText()).isEqualTo(comment.getText());
-        verify(commentRepository, times(1)).findByCardId(cardId);
+        verify(commentRepository, times(1)).findByCardId(taskId);
     }
 }

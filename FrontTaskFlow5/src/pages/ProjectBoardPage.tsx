@@ -9,6 +9,7 @@ import { projectService } from "@/services/project.service"
 import { taskService } from "@/services/task.service"
 import { KanbanBoard } from "@/components/project/KanbanBoard"
 import { AddTaskDialog } from "@/components/project/AddTaskDialog"
+import { ManageMembersDialog } from "@/components/project/ManageMembersDialog"
 import { toast } from "sonner"
 
 export default function ProjectBoardPage() {
@@ -18,6 +19,7 @@ export default function ProjectBoardPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
+  const [isManageMembersOpen, setIsManageMembersOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -121,6 +123,10 @@ export default function ProjectBoardPage() {
                 <span className="material-icons text-lg">add</span>
                 Nova Tarefa
               </Button>
+              <Button variant="outline" onClick={() => setIsManageMembersOpen(true)}>
+                <span className="material-icons text-lg mr-1">group</span>
+                Gerenciar Membros
+              </Button>
               <Button variant="ghost" size="icon" aria-label="Filtros">
                 <span className="material-icons">filter_list</span>
               </Button>
@@ -141,6 +147,12 @@ export default function ProjectBoardPage() {
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}
         onTaskAdd={(task) => setTasks((prev) => [...prev, task])}
+      />
+
+      <ManageMembersDialog
+        projectId={id!}
+        open={isManageMembersOpen}
+        onOpenChange={setIsManageMembersOpen}
       />
     </div>
   )

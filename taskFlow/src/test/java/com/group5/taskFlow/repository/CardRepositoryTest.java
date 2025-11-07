@@ -25,14 +25,24 @@ public class CardRepositoryTest {
 
     private ColumnsModels column;
     private UserModels assignee;
+    private UserModels boardOwner;
 
     @BeforeEach
     void setUp() {
+        // Create a board owner
+        boardOwner = new UserModels();
+        boardOwner.setEmail("boardowner@example.com");
+        boardOwner.setPasswordHash("password");
+        boardOwner.setFirstName("Board");
+        boardOwner.setLastName("Owner");
+        entityManager.persist(boardOwner);
+
         // Setup entities that Card depends on
         BoardModels board = new BoardModels();
         board.setName("Test Board");
         board.setCreatedAt(Instant.now());
         board.setUpdatedAt(Instant.now());
+        board.setOwner(boardOwner);
         entityManager.persist(board);
 
         ColumnTypeModels columnType = new ColumnTypeModels();

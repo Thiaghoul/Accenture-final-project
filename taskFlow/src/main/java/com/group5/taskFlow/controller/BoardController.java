@@ -1,9 +1,7 @@
 package com.group5.taskFlow.controller;
 
-import com.group5.taskFlow.dto.BoardRequest;
-import com.group5.taskFlow.dto.BoardResponse;
-import com.group5.taskFlow.dto.CardRequest;
-import com.group5.taskFlow.dto.CardResponse;
+import com.group5.taskFlow.dto.*;
+import com.group5.taskFlow.model.enums.MemberRoles;
 import com.group5.taskFlow.service.BoardService;
 import com.group5.taskFlow.service.CardService;
 import jakarta.validation.Valid;
@@ -45,18 +43,6 @@ public class BoardController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
-    @GetMapping("/{projectId}/tasks")
-    public ResponseEntity<List<CardResponse>> getTasksForBoard(@PathVariable UUID projectId) {
-        List<CardResponse> tasks = boardService.getTasksForBoard(projectId);
-        return new ResponseEntity<>(tasks, HttpStatus.OK);
-    }
-
-    @PostMapping("/{projectId}/tasks")
-    public ResponseEntity<CardResponse> createTaskForBoard(@PathVariable UUID projectId, @RequestBody CardRequest cardRequest) {
-        CardResponse newCard = cardService.save(projectId, cardRequest);
-        return new ResponseEntity<>(newCard, HttpStatus.CREATED);
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<BoardResponse> updateBoard(@PathVariable UUID id, @RequestBody BoardRequest boardRequest) {
         BoardResponse updatedBoard = boardService.update(id, boardRequest);
@@ -66,6 +52,25 @@ public class BoardController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBoard(@PathVariable UUID id) {
         boardService.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    // Member Endpoints
+    @GetMapping("/{projectId}/members")
+    public ResponseEntity<List<UserResponse>> getProjectMembers(@PathVariable UUID projectId) {
+        List<UserResponse> members = boardService.getMembers(projectId);
+        return ResponseEntity.ok(members);
+    }
+
+    @PostMapping("/{projectId}/members")
+    public ResponseEntity<Void> addProjectMember(@PathVariable UUID projectId, @RequestBody AddMemberRequest addMemberRequest) {
+        boardService.addMember(projectId, addMemberRequest.getUserId(), addMemberRequest.getRole());
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{projectId}/members/{userId}")
+    public ResponseEntity<Void> removeProjectMember(@PathVariable UUID projectId, @PathVariable UUID userId) {
+        boardService.removeMember(projectId, userId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

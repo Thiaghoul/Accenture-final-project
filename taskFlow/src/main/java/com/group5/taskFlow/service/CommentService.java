@@ -11,9 +11,11 @@ import com.group5.taskFlow.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,9 +34,10 @@ public class CommentService {
         this.emailService = emailService;
     }
 
-    public CommentResponse save(CommentRequest commentRequest) {
-        CardsModels card = cardRepository.findById(commentRequest.getCardId())
-                .orElseThrow(() -> new EntityNotFoundException("Card not found with id: " + commentRequest.getCardId()));
+    @Transactional
+    public CommentResponse save(UUID taskId, CommentRequest commentRequest) {
+        CardsModels card = cardRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found with id: " + taskId));
 
         UserModels user = userRepository.findById(commentRequest.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + commentRequest.getUserId()));
@@ -64,8 +67,8 @@ public class CommentService {
         return toCommentResponse(savedComment);
     }
 
-    public List<CommentResponse> findByCardId(java.util.UUID cardId) {
-        return commentRepository.findByCardId(cardId).stream()
+    public List<CommentResponse> findByTaskId(UUID taskId) {
+        return commentRepository.findByCardId(taskId).stream()
                 .map(this::toCommentResponse)
                 .collect(Collectors.toList());
     }

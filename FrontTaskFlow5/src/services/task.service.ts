@@ -76,6 +76,14 @@ class TaskService {
   }
 
   /**
+   * Assign task to current user
+   */
+  async assignMeToTask(taskId: string): Promise<Task> {
+    const response = await api.post<Task>(`/cards/${taskId}/assign-me`);
+    return response.data;
+  }
+
+  /**
    * Add comment to task
    */
   async addComment(projectId: string, taskId: string, data: AddCommentRequest): Promise<Task> {

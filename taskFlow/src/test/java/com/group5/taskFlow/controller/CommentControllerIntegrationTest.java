@@ -58,7 +58,8 @@ public class CommentControllerIntegrationTest {
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
 
-    private UUID cardId;
+    private UUID projectId;
+    private UUID taskId;
     private UUID userId;
     private UUID assigneeId;
     private CardsModels card;
@@ -69,7 +70,8 @@ public class CommentControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        cardId = UUID.randomUUID();
+        projectId = UUID.randomUUID();
+        taskId = UUID.randomUUID();
         userId = UUID.randomUUID();
         assigneeId = UUID.randomUUID();
 
@@ -83,7 +85,7 @@ public class CommentControllerIntegrationTest {
         assignee.setEmail("assignee@example.com");
 
         card = new CardsModels();
-        card.setId(cardId);
+        card.setId(taskId);
         card.setTitle("Test Task");
         card.setAssignee(assignee);
 
@@ -104,20 +106,19 @@ public class CommentControllerIntegrationTest {
     void createComment_whenValidRequestAndAssigneeIsNotCommenter_shouldReturnOkAndSendEmail() throws Exception {
         // Arrange
         CommentRequest request = new CommentRequest();
-        request.setCardId(cardId);
         request.setUserId(userId);
         request.setText("New comment text");
 
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.findById(taskId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(commentRepository.save(any(CommentsModels.class))).thenReturn(comment);
 
         // Act & Assert
-        mockMvc.perform(post("/api/v1/comments")
+        mockMvc.perform(post("/api/projects/{projectId}/tasks/{taskId}/comments", projectId, taskId)
                         .header("Authorization", "Bearer " + validJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.text").value("This is a test comment."));
 
         verify(commentRepository, times(1)).save(any(CommentsModels.class));
@@ -129,37 +130,34 @@ public class CommentControllerIntegrationTest {
         // Arrange
         card.setAssignee(user); // Assignee is the same as the commenter
         CommentRequest request = new CommentRequest();
-        request.setCardId(cardId);
         request.setUserId(userId);
         request.setText("New comment text");
 
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.findById(taskId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(commentRepository.save(any(CommentsModels.class))).thenReturn(comment);
 
         // Act & Assert
-        mockMvc.perform(post("/api/v1/comments")
+        mockMvc.perform(post("/api/projects/{projectId}/tasks/{taskId}/comments", projectId, taskId)
                         .header("Authorization", "Bearer " + validJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         verify(commentRepository, times(1)).save(any(CommentsModels.class));
         verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
-    // ...existing code...
     @Test
     void createComment_whenCardNotFound_shouldReturnNotFound() throws Exception {
         CommentRequest request = new CommentRequest();
-        request.setCardId(cardId);
         request.setUserId(userId);
         request.setText("New comment text");
 
-        when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
+        when(cardRepository.findById(taskId)).thenReturn(Optional.empty());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        mockMvc.perform(post("/api/v1/comments")
+        mockMvc.perform(post("/api/projects/{projectId}/tasks/{taskId}/comments", projectId, taskId)
                         .header("Authorization", "Bearer " + validJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -170,15 +168,14 @@ public class CommentControllerIntegrationTest {
     void createComment_whenUserNotFound_shouldReturnNotFound() throws Exception {
         // Arrange
         CommentRequest request = new CommentRequest();
-        request.setCardId(cardId);
         request.setUserId(userId);
         request.setText("New comment text");
 
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.findById(taskId)).thenReturn(Optional.of(card));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(post("/api/v1/comments")
+        mockMvc.perform(post("/api/projects/{projectId}/tasks/{taskId}/comments", projectId, taskId)
                         .header("Authorization", "Bearer " + validJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -189,17 +186,17 @@ public class CommentControllerIntegrationTest {
     }
 
     @Test
-    void getCommentsByCardId_shouldReturnListOfComments() throws Exception {
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card)); 
+    void getCommentsByTaskId_shouldReturnListOfComments() throws Exception {
+        when(cardRepository.findById(taskId)).thenReturn(Optional.of(card)); 
         
-        when(commentRepository.findByCardId(cardId)).thenReturn(List.of(comment));
+        when(commentRepository.findByCardId(taskId)).thenReturn(List.of(comment));
 
-        mockMvc.perform(get("/api/v1/comments/card/{cardId}", cardId)
+        mockMvc.perform(get("/api/projects/{projectId}/tasks/{taskId}/comments", projectId, taskId)
                         .header("Authorization", "Bearer " + validJwtToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].text").value(comment.getText()));
 
-        verify(commentRepository, times(1)).findByCardId(cardId);
+        verify(commentRepository, times(1)).findByCardId(taskId);
     }
 }

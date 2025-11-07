@@ -6,8 +6,11 @@ import { useState } from "react"
 import type { Task } from "@/lib/mock-data"
 import { TaskCard } from "./TaskCard"
 import { TaskDetailDialog } from "./TaskDetailDialog"
+import { taskService } from "@/services/task.service"
+import { toast } from "sonner"
 
 interface KanbanBoardProps {
+  projectId: string
   tasks: Task[]
   onTaskMove: (taskId: string, newStatus: Task["status"]) => void
 }
@@ -19,7 +22,7 @@ const columns: { id: Task["status"]; title: string; color: string }[] = [
   { id: "done", title: "Concluído", color: "#7ED321" },
 ]
 
-export function KanbanBoard({ tasks, onTaskMove }: KanbanBoardProps) {
+export function KanbanBoard({ projectId, tasks, onTaskMove }: KanbanBoardProps) {
   const [draggedTask, setDraggedTask] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -37,9 +40,16 @@ export function KanbanBoard({ tasks, onTaskMove }: KanbanBoardProps) {
     e.preventDefault()
   }
 
-  const handleDrop = (status: Task["status"]) => {
+  const handleDrop = async (status: Task["status"]) => {
     if (draggedTask) {
-      onTaskMove(draggedTask, status)
+      try {
+        await taskService.moveTask(projectId, draggedTask, status)
+        onTaskMove(draggedTask, status)
+        toast.success("Tarefa movida com sucesso!")
+      } catch (error) {
+        console.error("Failed to move task:", error)
+        toast.error("Falha ao mover a tarefa.")
+      }
       setDraggedTask(null)
     }
   }
@@ -106,6 +116,7 @@ export function KanbanBoard({ tasks, onTaskMove }: KanbanBoardProps) {
       </div>
 
       <TaskDetailDialog
+        projectId={projectId}
         task={selectedTask}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}

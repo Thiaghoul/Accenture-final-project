@@ -2,6 +2,21 @@ import type { Project, Task } from "./mock-data"
 
 const PROJECTS_KEY = "taskflow_projects"
 const TASKS_KEY = "taskflow_tasks"
+const USER_KEY = "user"
+
+export const getUserId = (): string | null => {
+  const user = localStorage.getItem(USER_KEY)
+  if (user) {
+    try {
+      const userData = JSON.parse(user)
+      return userData.id || null
+    } catch (error) {
+      console.error("Failed to parse user data from storage", error)
+      return null
+    }
+  }
+  return null
+}
 
 export const storage = {
   // Projects

@@ -2,6 +2,7 @@ package com.group5.taskFlow.service;
 
 import com.group5.taskFlow.dto.CardRequest;
 import com.group5.taskFlow.dto.CardResponse;
+import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
@@ -19,7 +20,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,18 +54,25 @@ public class CardServiceTest {
     @InjectMocks
     private CardService cardService;
 
+    private UUID projectId;
     private CardsModels cardsModels;
     private CardRequest cardRequest;
     private ColumnsModels columnsModels;
     private UserModels userModels;
+    private BoardModels boardModels;
 
     @BeforeEach
     void setUp() {
+        projectId = UUID.randomUUID();
         UUID columnId = UUID.randomUUID();
         UUID assigneeId = UUID.randomUUID();
 
+        boardModels = new BoardModels();
+        boardModels.setId(projectId);
+
         columnsModels = new ColumnsModels();
         columnsModels.setId(columnId);
+        columnsModels.setBoard(boardModels);
 
         userModels = new UserModels();
         userModels.setId(assigneeId);
@@ -91,11 +102,12 @@ public class CardServiceTest {
 
     @Test
     public void save_shouldReturnCardResponseAndSendEmail() {
+        when(boardRepository.findById(eq(projectId))).thenReturn(Optional.of(boardModels));
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
         when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(userModels));
         when(cardRepository.save(any(CardsModels.class))).thenReturn(cardsModels);
 
-        CardResponse result = cardService.save(cardRequest);
+        CardResponse result = cardService.save(projectId, cardRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo(cardRequest.getTitle());
@@ -109,30 +121,46 @@ public class CardServiceTest {
         cardRequest.setAssigneeId(null);
         cardsModels.setAssignee(null);
 
+        when(boardRepository.findById(eq(projectId))).thenReturn(Optional.of(boardModels));
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
         when(cardRepository.save(any(CardsModels.class))).thenReturn(cardsModels);
 
-        CardResponse result = cardService.save(cardRequest);
+        CardResponse result = cardService.save(projectId, cardRequest);
 
         assertThat(result).isNotNull();
         verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
     @Test
-    public void save_whenColumnNotFound_shouldThrowNoSuchElementException() {
+    public void save_whenColumnNotFound_shouldThrowEntityNotFoundException() {
+        when(boardRepository.findById(eq(projectId))).thenReturn(Optional.of(boardModels));
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> cardService.save(cardRequest));
+        assertThrows(EntityNotFoundException.class, () -> cardService.save(projectId, cardRequest));
         verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
     @Test
-    public void save_whenAssigneeNotFound_shouldThrowNoSuchElementException() {
+    public void save_whenAssigneeNotFound_shouldThrowEntityNotFoundException() {
+        when(boardRepository.findById(eq(projectId))).thenReturn(Optional.of(boardModels));
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
         when(userRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> cardService.save(cardRequest));
+        assertThrows(EntityNotFoundException.class, () -> cardService.save(projectId, cardRequest));
         verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void findAllByProjectId_shouldReturnListOfCardResponses() {
+        boardModels.setColumns(Set.of(columnsModels));
+        columnsModels.setCards(Set.of(cardsModels));
+
+        when(boardRepository.findById(eq(projectId))).thenReturn(Optional.of(boardModels));
+
+        List<CardResponse> result = cardService.findAllByProjectId(projectId);
+
+        assertThat(result).isNotNull().hasSize(1);
+        assertThat(result.get(0).getTitle()).isEqualTo(cardsModels.getTitle());
     }
 
     @Test
@@ -168,8 +196,20 @@ public class CardServiceTest {
         verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
-  @Test
-  void getAllCardOfBoard() {
+    @Test
+    public void changeStatusWithId_shouldUpdateCardColumn() {
+        UUID taskId = cardsModels.getId();
+        UUID newColumnId = UUID.randomUUID();
+        ColumnsModels newColumn = new ColumnsModels();
+        newColumn.setId(newColumnId);
 
-  }
+        when(cardRepository.findById(eq(taskId))).thenReturn(Optional.of(cardsModels));
+        when(columnRepository.findById(eq(newColumnId))).thenReturn(Optional.of(newColumn));
+        when(cardRepository.save(any(CardsModels.class))).thenReturn(cardsModels);
+
+        cardService.changeStatusWithId(taskId, newColumnId);
+
+        assertThat(cardsModels.getColumn().getId()).isEqualTo(newColumnId);
+        verify(cardRepository, times(1)).save(cardsModels);
+    }
 }
