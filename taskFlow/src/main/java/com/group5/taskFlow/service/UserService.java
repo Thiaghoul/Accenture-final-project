@@ -3,14 +3,17 @@ package com.group5.taskFlow.service;
 import com.group5.taskFlow.dto.UserRegisterResponse;
 import com.group5.taskFlow.dto.UserRequest;
 import com.group5.taskFlow.dto.UserResponse;
+import com.group5.taskFlow.model.PasswordResetToken;
 import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.model.enums.UserRoles;
+import com.group5.taskFlow.repository.PasswordResetTokenRepository;
 import com.group5.taskFlow.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import com.group5.taskFlow.security.JwtTokenProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Calendar;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -20,11 +23,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
     }
 
     public UserResponse save(UserRequest userRequest) {
@@ -90,6 +97,36 @@ public class UserService {
             throw new EntityNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
+    }
+
+    public void createPasswordResetTokenForUser(String email) {
+        UserModels user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken myToken = new PasswordResetToken(token, user);
+        passwordResetTokenRepository.save(myToken);
+        emailService.sendSimpleMessage(email, "Password Reset Request", "To reset your password, click the link below:\n" + "http://localhost:8080/reset-password?token=" + token);
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken passwordResetToken = validatePasswordResetToken(token);
+        UserModels user = passwordResetToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        passwordResetTokenRepository.delete(passwordResetToken);
+    }
+
+    private PasswordResetToken validatePasswordResetToken(String token) {
+        PasswordResetToken passToken = passwordResetTokenRepository.findByToken(token);
+        if (passToken == null) {
+            throw new IllegalArgumentException("Invalid token.");
+        }
+
+        Calendar cal = Calendar.getInstance();
+        if ((passToken.getExpiryDate().getTime() - cal.getTime().getTime()) <= 0) {
+            throw new IllegalArgumentException("Token has expired.");
+        }
+        return passToken;
     }
 
     private UserResponse toUserResponse(UserModels userModels) {

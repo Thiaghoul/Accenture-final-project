@@ -1,10 +1,7 @@
 package com.group5.taskFlow.service;
 
-import com.group5.taskFlow.dto.BoardResponse;
 import com.group5.taskFlow.dto.CardRequest;
 import com.group5.taskFlow.dto.CardResponse;
-import com.group5.taskFlow.dto.ColumnResponse;
-import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
@@ -17,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,15 +25,16 @@ public class CardService {
   private final CardRepository cardRepository;
   private final ColumnRepository columnRepository;
   private final UserRepository userRepository;
-//  private final BoardService boardService;
   private final BoardRepository boardRepository;
+  private final EmailService emailService;
 
   @Autowired
-  public CardService(CardRepository cardRepository, ColumnRepository columnRepository, UserRepository userRepository, BoardRepository boardRepository) {
+  public CardService(CardRepository cardRepository, ColumnRepository columnRepository, UserRepository userRepository, BoardRepository boardRepository, EmailService emailService) {
     this.cardRepository = cardRepository;
     this.columnRepository = columnRepository;
     this.userRepository = userRepository;
     this.boardRepository = boardRepository;
+    this.emailService = emailService;
   }
 
   public CardResponse save(CardRequest cardRequest) {
@@ -58,6 +58,11 @@ public class CardService {
     card.setUpdatedAt(Instant.now());
 
     CardsModels savedCard = cardRepository.save(card);
+
+    if (assignee != null) {
+      emailService.sendSimpleMessage(assignee.getEmail(), "You have been assigned a new task", "You have been assigned the task: " + savedCard.getTitle());
+    }
+
     return toCardResponse(savedCard);
   }
 
@@ -96,6 +101,11 @@ public class CardService {
     card.setUpdatedAt(Instant.now());
 
     CardsModels updatedCard = cardRepository.save(card);
+
+    if (assignee != null) {
+      emailService.sendSimpleMessage(assignee.getEmail(), "A task assigned to you has been updated", "The task: " + updatedCard.getTitle() + " has been updated.");
+    }
+
     return toCardResponse(updatedCard);
   }
 

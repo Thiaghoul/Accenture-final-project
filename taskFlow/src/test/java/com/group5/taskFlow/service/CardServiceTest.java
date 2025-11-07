@@ -6,6 +6,7 @@ import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ColumnsModels;
 import com.group5.taskFlow.model.UserModels;
 import com.group5.taskFlow.model.enums.Priority;
+import com.group5.taskFlow.repository.BoardRepository;
 import com.group5.taskFlow.repository.CardRepository;
 import com.group5.taskFlow.repository.ColumnRepository;
 import com.group5.taskFlow.repository.UserRepository;
@@ -24,7 +25,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CardServiceTest {
@@ -37,6 +40,12 @@ public class CardServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BoardRepository boardRepository;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private CardService cardService;
@@ -75,10 +84,13 @@ public class CardServiceTest {
         cardRequest.setDueDate(LocalDate.now().plusDays(7));
         cardRequest.setColumnId(columnId);
         cardRequest.setAssigneeId(assigneeId);
+
+        // Manually inject mocks since @InjectMocks might not handle all constructor parameters automatically after adding new ones
+        cardService = new CardService(cardRepository, columnRepository, userRepository, boardRepository, emailService);
     }
 
     @Test
-    public void save_shouldReturnCardResponse() {
+    public void save_shouldReturnCardResponseAndSendEmail() {
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
         when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(userModels));
         when(cardRepository.save(any(CardsModels.class))).thenReturn(cardsModels);
@@ -89,6 +101,21 @@ public class CardServiceTest {
         assertThat(result.getTitle()).isEqualTo(cardRequest.getTitle());
         assertThat(result.getColumnId()).isEqualTo(cardRequest.getColumnId());
         assertThat(result.getAssigneeId()).isEqualTo(cardRequest.getAssigneeId());
+        verify(emailService, times(1)).sendSimpleMessage(eq(userModels.getEmail()), anyString(), anyString());
+    }
+
+    @Test
+    public void save_whenNoAssignee_shouldNotSendEmail() {
+        cardRequest.setAssigneeId(null);
+        cardsModels.setAssignee(null);
+
+        when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
+        when(cardRepository.save(any(CardsModels.class))).thenReturn(cardsModels);
+
+        CardResponse result = cardService.save(cardRequest);
+
+        assertThat(result).isNotNull();
+        verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -96,6 +123,7 @@ public class CardServiceTest {
         when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> cardService.save(cardRequest));
+        verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -104,6 +132,40 @@ public class CardServiceTest {
         when(userRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> cardService.save(cardRequest));
+        verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void update_shouldSendEmailToAssignee() {
+        UUID cardId = cardsModels.getId();
+        cardRequest.setTitle("Updated Title");
+
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(cardsModels));
+        when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(userModels));
+        when(cardRepository.save(any(CardsModels.class))).thenReturn(cardsModels);
+
+        CardResponse result = cardService.update(cardId, cardRequest);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTitle()).isEqualTo("Updated Title");
+        verify(emailService, times(1)).sendSimpleMessage(eq(userModels.getEmail()), anyString(), anyString());
+    }
+
+    @Test
+    public void update_whenAssigneeRemoved_shouldNotSendEmail() {
+        UUID cardId = cardsModels.getId();
+        cardRequest.setAssigneeId(null);
+        cardsModels.setAssignee(null);
+
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(cardsModels));
+        when(columnRepository.findById(any(UUID.class))).thenReturn(Optional.of(columnsModels));
+        when(cardRepository.save(any(CardsModels.class))).thenReturn(cardsModels);
+
+        CardResponse result = cardService.update(cardId, cardRequest);
+
+        assertThat(result).isNotNull();
+        verify(emailService, never()).sendSimpleMessage(anyString(), anyString(), anyString());
     }
 
   @Test
