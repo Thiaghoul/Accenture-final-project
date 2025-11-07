@@ -67,7 +67,7 @@ public class CommentService {
             );
         }
 
-        activityLogService.logActivity(EventType.COMMENT_CREATED, "Comment added to card: " + card.getTitle(), user, card.getColumn().getBoard());
+        activityLogService.logActivity(EventType.COMMENT_CREATED, "Comment added to card: " + card.getTitle(), user, card.getColumn().getBoard(), card);
         return toCommentResponse(savedComment);
     }
 

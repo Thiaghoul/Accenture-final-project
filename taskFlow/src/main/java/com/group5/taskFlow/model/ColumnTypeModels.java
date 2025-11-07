@@ -2,15 +2,18 @@ package com.group5.taskFlow.model;
 
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "column_types")
 public class ColumnTypeModels implements Serializable {
 
@@ -29,4 +32,25 @@ public class ColumnTypeModels implements Serializable {
     @OneToMany(mappedBy = "columnType")
     private Set<ColumnsModels> columns = new HashSet<>();
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ColumnTypeModels that = (ColumnTypeModels) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "ColumnTypeModels{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", order=" + order +
+                '}';
+    }
 }

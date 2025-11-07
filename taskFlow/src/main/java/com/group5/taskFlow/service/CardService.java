@@ -76,7 +76,7 @@ public class CardService {
       emailService.sendSimpleMessage(assignee.getEmail(), "You have been assigned a new task", "You have been assigned the task: " + savedCard.getTitle());
     }
 
-    activityLogService.logActivity(EventType.CARD_CREATED, "Card created: " + savedCard.getTitle(), board.getOwner(), board);
+    activityLogService.logActivity(EventType.CARD_CREATED, "Card created: " + savedCard.getTitle(), board.getOwner(), board, savedCard);
     return toCardResponse(savedCard);
   }
 
@@ -125,7 +125,7 @@ public class CardService {
       emailService.sendSimpleMessage(assignee.getEmail(), "A task assigned to you has been updated", "The task: " + updatedCard.getTitle() + " has been updated.");
     }
 
-    activityLogService.logActivity(EventType.CARD_UPDATED, "Card updated: " + updatedCard.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
+    activityLogService.logActivity(EventType.CARD_UPDATED, "Card updated: " + updatedCard.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard(), updatedCard);
     return toCardResponse(updatedCard);
   }
 
@@ -133,7 +133,7 @@ public class CardService {
   public void deleteById(UUID id) {
     CardsModels card = cardRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Card not found with ID: " + id));
-    activityLogService.logActivity(EventType.CARD_DELETED, "Card deleted: " + card.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
+    activityLogService.logActivity(EventType.CARD_DELETED, "Card deleted: " + card.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard(), card);
     cardRepository.deleteById(id);
   }
 
@@ -167,7 +167,7 @@ public class CardService {
         card.setUpdatedAt(Instant.now());
 
         cardRepository.save(card);
-        activityLogService.logActivity(EventType.CARD_MOVED, "Card " + card.getTitle() + " moved to " + newColumn.getColumnType().getName(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
+        activityLogService.logActivity(EventType.CARD_MOVED, "Card " + card.getTitle() + " moved to " + newColumn.getColumnType().getName(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard(), card);
       }
 
     
@@ -204,7 +204,7 @@ public class CardService {
 
     
 
-        activityLogService.logActivity(EventType.MEMBER_ASSIGNED, "User " + user.getEmail() + " assigned to card " + card.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard());
+        activityLogService.logActivity(EventType.MEMBER_ASSIGNED, "User " + user.getEmail() + " assigned to card " + card.getTitle(), card.getColumn().getBoard().getOwner(), card.getColumn().getBoard(), updatedCard);
         return toCardResponse(updatedCard);
 
       }

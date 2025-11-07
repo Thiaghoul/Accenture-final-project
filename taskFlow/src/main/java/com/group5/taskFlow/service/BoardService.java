@@ -47,10 +47,15 @@ public class BoardService {
         board.setName(boardRequest.getName());
         board.setDescription(boardRequest.getDescription());
         board.setOwner(owner);
-        board.setCreatedAt(Instant.now());
-        board.setUpdatedAt(Instant.now());
+
+        BoardMembersModels ownerMembership = new BoardMembersModels();
+        ownerMembership.setBoard(board);
+        ownerMembership.setUser(owner);
+        ownerMembership.setRole(MemberRoles.OWNER);
+        board.getMembers().add(ownerMembership);
 
         BoardModels savedBoard = boardRepository.save(board);
+        
         activityLogService.logActivity(EventType.BOARD_CREATED, "Board created: " + savedBoard.getName(), owner, savedBoard);
         return toBoardResponse(savedBoard);
     }

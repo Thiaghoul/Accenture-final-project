@@ -1,5 +1,7 @@
 package com.group5.taskFlow.service;
 
+
+import com.group5.taskFlow.model.CardsModels;
 import com.group5.taskFlow.model.ActivityLogsModels;
 import com.group5.taskFlow.model.BoardModels;
 import com.group5.taskFlow.model.UserModels;
@@ -24,11 +26,17 @@ public class ActivityLogService {
 
     @Transactional
     public void logActivity(EventType eventType, String details, UserModels user, BoardModels board) {
+        logActivity(eventType, details, user, board, null);
+    }
+
+    @Transactional
+    public void logActivity(EventType eventType, String details, UserModels user, BoardModels board, CardsModels card) {
         ActivityLogsModels log = new ActivityLogsModels();
         log.setEventType(eventType);
         log.setDetails(details);
         log.setUser(user);
         log.setBoard(board);
+        log.setCard(card);
         activityLogRepository.save(log);
     }
 
