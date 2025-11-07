@@ -27,11 +27,16 @@ public class BoardMemberController {
 
   @GetMapping("/user/{userId}/boards")
   public ResponseEntity<List<BoardResponse>> getBoardsByUserId(@PathVariable UUID userId) {
-    List<BoardModels> boards = boardMemberService.findBoardsByUserId(userId);
-    var listResult = boards.stream().map(boardService::toBoardResponse).toList();
+    try {
+      List<BoardModels> boards = boardMemberService.findBoardsByUserId(userId);
+      var listResult = boards.stream().map(boardService::toBoardResponse).toList();
 
-    // TODO: problema em enviar a lista de boards para o cliente
-    return ResponseEntity.ok().body(listResult);
+      // TODO: problema em enviar a lista de boards para o cliente
+      return ResponseEntity.ok().body(listResult);
+    } catch (Exception e) {
+      System.out.println("ERROR -- " + e.getMessage());
+      return ResponseEntity.notFound().build();
+    }
   }
 
   @PostMapping
