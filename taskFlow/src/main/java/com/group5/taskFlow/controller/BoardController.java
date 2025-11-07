@@ -32,6 +32,12 @@ public class BoardController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
+    @GetMapping
+    public ResponseEntity<List<BoardResponse>> getAllBoards() {
+        List<BoardResponse> boards = boardService.findAll();
+        return new ResponseEntity<>(boards, HttpStatus.OK);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<BoardResponse> updateBoard(@PathVariable UUID id, @RequestBody BoardRequest boardRequest) {
         BoardResponse updatedBoard = boardService.update(id, boardRequest);

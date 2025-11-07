@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface BoardMemberRepository extends JpaRepository<BoardMembersModels, UUID> {
     List<BoardMembersModels> findByUserId(UUID userId);
+    List<BoardMembersModels> findByBoardId(UUID boardId);
+    void deleteByBoardIdAndUserId(UUID boardId, UUID userId);
 }

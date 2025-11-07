@@ -43,6 +43,20 @@ public class BoardMemberController {
         }
     }
 
+    @GetMapping("/board/{boardId}/members")
+    public ResponseEntity<List<BoardMemberResponse>> getBoardMembers(@PathVariable UUID boardId) {
+        log.info("Received request to get members for board id: {}", boardId);
+        List<BoardMemberResponse> members = boardMemberService.findBoardMembers(boardId);
+        return ResponseEntity.ok(members);
+    }
+
+    @DeleteMapping("/board/{boardId}/members/{userId}")
+    public ResponseEntity<Void> removeBoardMember(@PathVariable UUID boardId, @PathVariable UUID userId) {
+        log.info("Received request to remove member {} from board {}", userId, boardId);
+        boardMemberService.removeBoardMember(boardId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping
     public ResponseEntity<BoardMemberResponse> createBoardMember(@RequestBody BoardMemberRequest boardMemberRequest) {
         log.info("Received request to create board member");

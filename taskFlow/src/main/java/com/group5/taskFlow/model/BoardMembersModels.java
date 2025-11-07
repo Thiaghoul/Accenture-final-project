@@ -13,21 +13,24 @@ import java.time.Instant;
 @IdClass(BoardMemberId.class)
 public class BoardMembersModels implements Serializable {
 
-    static final long serialVersionUID = 1L;
+    @EmbeddedId
+    private BoardMemberId id;
 
-    @Id
     @ManyToOne
-    @JoinColumn(name = "board_id", nullable = false)
-    private BoardModels board;
-
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
     private UserModels user;
 
+    @ManyToOne
+    @MapsId("boardId")
+    @JoinColumn(name = "board_id")
+    private BoardModels board;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private MemberRoles role;
 
-    private Instant joinedAt = Instant.now();
+    public BoardMemberId getId() {
+        return id;
+    }
 }

@@ -27,6 +27,22 @@ public class CommentController {
         return ResponseEntity.ok(commentService.save(commentRequest));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<CommentResponse> getCommentById(@PathVariable UUID id) {
+        return ResponseEntity.ok(commentService.findById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CommentResponse> updateComment(@PathVariable UUID id, @Valid @RequestBody CommentRequest commentRequest) {
+        return ResponseEntity.ok(commentService.update(id, commentRequest));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteComment(@PathVariable UUID id) {
+        commentService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/card/{cardId}")
     public ResponseEntity<List<CommentResponse>> getCommentsByCardId (@PathVariable UUID cardId){
         return ResponseEntity.ok(commentService.findByCardId(cardId));
