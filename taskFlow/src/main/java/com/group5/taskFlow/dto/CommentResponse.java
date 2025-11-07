@@ -9,7 +9,11 @@ import java.util.UUID;
 public class CommentResponse {
     private UUID id;
     private String content;
+    private UUID cardId;
     private UUID userId;
-    private String userName;
     private Instant createdAt;
+
+    public void setCardId(UUID cardId) {
+        this.cardId = cardId;
+    }
 }

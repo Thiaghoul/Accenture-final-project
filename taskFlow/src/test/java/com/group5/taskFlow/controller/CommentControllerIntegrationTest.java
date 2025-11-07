@@ -89,7 +89,7 @@ public class CommentControllerIntegrationTest {
 
         comment = new CommentsModels();
         comment.setId(UUID.randomUUID());
-        comment.setText("This is a test comment.");
+        comment.setContent("Test Comment");
         comment.setCard(card);
         comment.setUser(user);
         comment.setCreatedAt(Instant.now());
